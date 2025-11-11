@@ -31,12 +31,12 @@ pygame.display.set_caption("🚀 Space Escape")
 # e troque apenas os nomes abaixo.
 
 ASSETS = {
-    "background": "fundo_espacial.png",                         # imagem de fundo
-    "player": "nave001.png",                                    # imagem da nave
-    "meteor": "meteoro001.png",                                 # imagem do meteoro
-    "sound_point": "classic-game-action-positive-5-224402.mp3", # som ao desviar com sucesso
-    "sound_hit": "stab-f-01-brvhrtz-224599.mp3",                # som de colisão
-    "music": "distorted-future-363866.mp3"          # música de fundo. direitos: Music by Maksym Malko from Pixabay
+    "background": "fundo_espacial.png",  # imagem de fundo
+    "player": "nave001.png",  # imagem da nave
+    "meteor": "meteoro001.png",  # imagem do meteoro
+    "sound_point": "classic-game-action-positive-5-224402.mp3",  # som ao desviar com sucesso
+    "sound_hit": "stab-f-01-brvhrtz-224599.mp3",  # som de colisão
+    "music": "distorted-future-363866.mp3"  # música de fundo. direitos: Music by Maksym Malko from Pixabay
 }
 
 # ----------------------------------------------------------
@@ -49,6 +49,7 @@ BLUE = (60, 100, 255)
 
 # Tela do jogo
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
+
 
 # Função auxiliar para carregar imagens de forma segura
 def load_image(filename, fallback_color, size=None):
@@ -63,16 +64,19 @@ def load_image(filename, fallback_color, size=None):
         surf.fill(fallback_color)
         return surf
 
+
 # Carrega imagens
 background = load_image(ASSETS["background"], WHITE, (WIDTH, HEIGHT))
 player_img = load_image(ASSETS["player"], BLUE, (80, 60))
 meteor_img = load_image(ASSETS["meteor"], RED, (40, 40))
+
 
 # Sons
 def load_sound(filename):
     if os.path.exists(filename):
         return pygame.mixer.Sound(filename)
     return None
+
 
 sound_point = load_sound(ASSETS["sound_point"])
 sound_hit = load_sound(ASSETS["sound_hit"])
@@ -120,6 +124,10 @@ while running:
         player_rect.x -= player_speed
     if keys[pygame.K_RIGHT] and player_rect.right < WIDTH:
         player_rect.x += player_speed
+    if keys[pygame.K_UP] and player_rect.top > 0:
+        player_rect.y -= player_speed
+    if keys[pygame.K_DOWN] and player_rect.bottom < HEIGHT:
+        player_rect.y += player_speed
 
     # --- Movimento dos meteoros ---
     for meteor in meteor_list:
