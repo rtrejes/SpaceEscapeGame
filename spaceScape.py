@@ -1,7 +1,7 @@
 ##############################################################
 ###               S P A C E     E S C A P E                ###
 ##############################################################
-###                  versao Alpha 0.3                      ###
+###                  versao Alpha 0.4                      ###
 ##############################################################
 ### Objetivo: desviar dos meteoros que caem.               ###
 ### Cada colisão tira uma vida. Sobreviva o máximo que     ###
@@ -36,7 +36,8 @@ ASSETS = {
     "meteor": "meteoro001.png",  # imagem do meteoro
     "sound_point": "classic-game-action-positive-5-224402.mp3",  # som ao desviar com sucesso
     "sound_hit": "stab-f-01-brvhrtz-224599.mp3",  # som de colisão
-    "music": "distorted-future-363866.mp3"  # música de fundo. direitos: Music by Maksym Malko from Pixabay
+    "music": "distorted-future-363866.mp3",  # música de fundo. direitos: Music by Maksym Malko from Pixabay
+    "missil": "missil.png"  # imagem do missil
 }
 
 # ----------------------------------------------------------
@@ -46,6 +47,7 @@ ASSETS = {
 WHITE = (255, 255, 255)
 RED = (255, 60, 60)
 BLUE = (60, 100, 255)
+YELLOW = (255, 220, 0)
 
 # Tela do jogo
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -64,19 +66,17 @@ def load_image(filename, fallback_color, size=None):
         surf.fill(fallback_color)
         return surf
 
-
 # Carrega imagens
 background = load_image(ASSETS["background"], WHITE, (WIDTH, HEIGHT))
 player_img = load_image(ASSETS["player"], BLUE, (80, 60))
 meteor_img = load_image(ASSETS["meteor"], RED, (40, 40))
-
+missil_img = load_image(ASSETS["missil"], YELLOW)  # tamanho original
 
 # Sons
 def load_sound(filename):
     if os.path.exists(filename):
         return pygame.mixer.Sound(filename)
     return None
-
 
 sound_point = load_sound(ASSETS["sound_point"])
 sound_hit = load_sound(ASSETS["sound_hit"])
@@ -94,17 +94,27 @@ player_rect = player_img.get_rect(center=(WIDTH // 2, HEIGHT - 60))
 player_speed = 7
 
 meteor_list = []
+missil_powerups = []
+active_missils = []
+
 for _ in range(5):
     x = random.randint(0, WIDTH - 40)
     y = random.randint(-500, -40)
     meteor_list.append(pygame.Rect(x, y, 40, 40))
+
 meteor_speed = 5
+missil_speed = 10
 
 score = 0
 lives = 3
 font = pygame.font.Font(None, 36)
 clock = pygame.time.Clock()
 running = True
+
+has_missil_power = False
+missil_timer = 0
+missil_time_left = 0          # tempo restante do power
+missil_end_time = 0           # momento em que acaba
 
 # ----------------------------------------------------------
 # 🕹️ LOOP PRINCIPAL
@@ -129,7 +139,9 @@ while running:
     if keys[pygame.K_DOWN] and player_rect.bottom < HEIGHT:
         player_rect.y += player_speed
 
-    # --- Movimento dos meteoros ---
+    # ------------------------------------------------------
+    # MOVIMENTO E LÓGICA DOS METEOROS
+    # ------------------------------------------------------
     for meteor in meteor_list:
         meteor.y += meteor_speed
 
@@ -137,11 +149,17 @@ while running:
         if meteor.y > HEIGHT:
             meteor.y = random.randint(-100, -40)
             meteor.x = random.randint(0, WIDTH - meteor.width)
+
+            # chance de 5% de spawnar míssil
+            if random.random() < 0.05:
+                powerup_rect = missil_img.get_rect(topleft=(meteor.x, meteor.y))
+                missil_powerups.append(powerup_rect)
+
             score += 1
             if sound_point:
                 sound_point.play()
 
-        # Colisão
+        # colisão com nave
         if meteor.colliderect(player_rect):
             lives -= 1
             meteor.y = random.randint(-100, -40)
@@ -151,14 +169,83 @@ while running:
             if lives <= 0:
                 running = False
 
-    # --- Desenha tudo ---
+    # ------------------------------------------------------
+    # MOVIMENTO DOS POWERUPS
+    # ------------------------------------------------------
+    for power in missil_powerups[:]:
+        power.y += meteor_speed
+
+        if power.colliderect(player_rect):
+            has_missil_power = True
+            missil_powerups.remove(power)
+
+            # ❗ Ativa timer de 10 segundos
+            missil_time_left = 10
+            missil_end_time = pygame.time.get_ticks() + 10000
+
+        elif power.y > HEIGHT:
+            missil_powerups.remove(power)
+
+    # ------------------------------------------------------
+    # DISPARO AUTOMÁTICO DE MÍSSIL
+    # ------------------------------------------------------
+    if has_missil_power:
+        missil_timer += 1
+        if missil_timer > 20:  # dispara a cada 20 frames
+            missil_rect = missil_img.get_rect(midbottom=player_rect.midtop)
+            active_missils.append(missil_rect)
+            missil_timer = 0
+
+        # atualiza contagem regressiva
+        now = pygame.time.get_ticks()
+        missil_time_left = max(0, (missil_end_time - now) // 1000)
+
+        # terminou o poder
+        if missil_time_left <= 0:
+            has_missil_power = False
+            active_missils.clear()
+
+    # ------------------------------------------------------
+    # MOVIMENTO DOS MÍSSEIS
+    # ------------------------------------------------------
+    for m in active_missils[:]:
+        m.y -= missil_speed
+
+        if m.y < -30:
+            active_missils.remove(m)
+        else:
+            for meteor in meteor_list:
+                if m.colliderect(meteor):
+                    meteor.y = random.randint(-100, -40)
+                    meteor.x = random.randint(0, WIDTH - meteor.width)
+                    active_missils.remove(m)
+                    if sound_point:
+                        sound_point.play()
+                    break
+
+    # ------------------------------------------------------
+    # DESENHO DOS ELEMENTOS
+    # ------------------------------------------------------
     screen.blit(player_img, player_rect)
+
     for meteor in meteor_list:
         screen.blit(meteor_img, meteor)
 
     # --- Exibe pontuação e vidas ---
+    for power in missil_powerups:
+        screen.blit(missil_img, power)
+
+    for m in active_missils:
+        screen.blit(missil_img, m)
+
+    # HUD (pontuação e vidas)
     text = font.render(f"Pontos: {score}   Vidas: {lives}", True, WHITE)
     screen.blit(text, (10, 10))
+
+    # Timer do míssil (canto superior direito)
+    if has_missil_power:
+        timer_txt = font.render(f"{missil_time_left}s", True, (255, 255, 0))
+        screen.blit(timer_txt, (WIDTH - 60, 10))
 
     pygame.display.flip()
 
