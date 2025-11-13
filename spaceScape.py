@@ -152,7 +152,10 @@ while running:
 
             # chance de 5% de spawnar míssil
             if random.random() < 0.05:
-                powerup_rect = missil_img.get_rect(topleft=(meteor.x, meteor.y))
+                px = random.randint(0, WIDTH - missil_img.get_width())
+                py = random.randint(-300, -50)
+                powerup_rect = missil_img.get_rect(topleft=(px, py))
+
                 missil_powerups.append(powerup_rect)
 
             score += 1
