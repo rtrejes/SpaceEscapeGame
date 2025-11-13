@@ -37,7 +37,7 @@ ASSETS = {
     "sound_point": "classic-game-action-positive-5-224402.mp3",  # som ao desviar com sucesso
     "sound_hit": "stab-f-01-brvhrtz-224599.mp3",  # som de colisão
     "music": "distorted-future-363866.mp3",  # música de fundo. direitos: Music by Maksym Malko from Pixabay
-    "missil": "missil.png"  # imagem do missil
+    "missil": "missil.png",  # imagem do missil
     "life_meteor": "meteoro_vidas.png"  # imagem do meteoro de vidas
 }
 
