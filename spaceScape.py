@@ -38,7 +38,8 @@ ASSETS = {
     "sound_hit": "stab-f-01-brvhrtz-224599.mp3",  # som de colisão
     "music": "distorted-future-363866.mp3",  # música de fundo. direitos: Music by Maksym Malko from Pixabay
     "missil": "missil.png",  # imagem do missil
-    "life_meteor": "meteoro_vidas.png"  # imagem do meteoro de vidas
+    "life_meteor": "meteoro_vidas.png",  # imagem do meteoro de vidas
+    "explosion": "explosao.png"  # imagem de explosao para meteoro
 }
 
 # ----------------------------------------------------------
@@ -72,8 +73,9 @@ def load_image(filename, fallback_color, size=None):
 background = load_image(ASSETS["background"], WHITE, (WIDTH, HEIGHT))
 player_img = load_image(ASSETS["player"], BLUE, (80, 60))
 meteor_img = load_image(ASSETS["meteor"], RED, (40, 40))
-missil_img = load_image(ASSETS["missil"], YELLOW)  # tamanho original
+missil_img = load_image(ASSETS["missil"], YELLOW) 
 life_meteor_img = load_image(ASSETS["life_meteor"], PINK, (40, 40))
+explosion_img = load_image(ASSETS["explosion"], YELLOW, (90, 90))
 
 # Sons
 def load_sound(filename):
@@ -99,7 +101,8 @@ player_speed = 7
 meteor_list = []
 missil_powerups = []
 active_missils = []
-life_meteor_list = []   # meteoro especial que dá vida
+life_meteor_list = [] 
+explosoes = []
 
 for _ in range(5):
     x = random.randint(0, WIDTH - 40)
@@ -228,6 +231,11 @@ while running:
         else:
             for meteor in meteor_list:
                 if m.colliderect(meteor):
+                    explosoes.append({
+                        "img": explosion_img,
+                        "rect": explosion_img.get_rect(center=meteor.center),
+                        "timer": 5
+                    })
                     meteor.y = random.randint(-100, -40)
                     meteor.x = random.randint(0, WIDTH - meteor.width)
                     active_missils.remove(m)
@@ -274,6 +282,13 @@ while running:
     if has_missil_power:
         timer_txt = font.render(f"{missil_time_left}s", True, (255, 255, 0))
         screen.blit(timer_txt, (WIDTH - 60, 10))
+
+    # Explosões temporárias
+    for ex in explosoes[:]:
+        screen.blit(ex["img"], ex["rect"])
+        ex["timer"] -= 1
+        if ex["timer"] <= 0:
+            explosoes.remove(ex)
 
     pygame.display.flip()
 
