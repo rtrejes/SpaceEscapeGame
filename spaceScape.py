@@ -36,9 +36,10 @@ ASSETS = {
     "meteor": "meteoro001.png",  # imagem do meteoro
     "sound_point": "classic-game-action-positive-5-224402.mp3",  # som ao desviar com sucesso
     "sound_hit": "stab-f-01-brvhrtz-224599.mp3",  # som de colisão
+    "sound_life": "sound_life.wav",
     "music": "distorted-future-363866.mp3",  # música de fundo. direitos: Music by Maksym Malko from Pixabay
     "missil": "missil.png",  # imagem do missil
-    "life_meteor": "meteoro_vidas.png"  # imagem do meteoro de vidas
+    "life_meteor": "meteoro_vidas_v2.png"  # imagem do meteoro de vidas
 }
 
 # ----------------------------------------------------------
@@ -68,12 +69,14 @@ def load_image(filename, fallback_color, size=None):
         surf.fill(fallback_color)
         return surf
 
+
 # Carrega imagens
 background = load_image(ASSETS["background"], WHITE, (WIDTH, HEIGHT))
 player_img = load_image(ASSETS["player"], BLUE, (80, 60))
 meteor_img = load_image(ASSETS["meteor"], RED, (40, 40))
 missil_img = load_image(ASSETS["missil"], YELLOW)  # tamanho original
-life_meteor_img = load_image(ASSETS["life_meteor"], PINK, (40, 40))
+life_meteor_img = load_image(ASSETS["life_meteor"], PINK, (70, 70))
+
 
 # Sons
 def load_sound(filename):
@@ -81,8 +84,10 @@ def load_sound(filename):
         return pygame.mixer.Sound(filename)
     return None
 
+
 sound_point = load_sound(ASSETS["sound_point"])
 sound_hit = load_sound(ASSETS["sound_hit"])
+sound_life = load_sound(ASSETS["sound_life"])
 
 # Música de fundo (opcional)
 if os.path.exists(ASSETS["music"]):
@@ -99,7 +104,7 @@ player_speed = 7
 meteor_list = []
 missil_powerups = []
 active_missils = []
-life_meteor_list = []   # meteoro especial que dá vida
+life_meteor_list = []  # meteoro especial que dá vida
 
 for _ in range(5):
     x = random.randint(0, WIDTH - 40)
@@ -117,8 +122,8 @@ running = True
 
 has_missil_power = False
 missil_timer = 0
-missil_time_left = 0          # tempo restante do power
-missil_end_time = 0           # momento em que acaba
+missil_time_left = 0  # tempo restante do power
+missil_end_time = 0  # momento em que acaba
 
 # ----------------------------------------------------------
 # 🕹️ LOOP PRINCIPAL
@@ -154,18 +159,20 @@ while running:
             meteor.y = random.randint(-100, -40)
             meteor.x = random.randint(0, WIDTH - meteor.width)
 
-            # chance de 5% de spawnar míssil
-            if random.random() < 0.05:
-                px = random.randint(0, WIDTH - missil_img.get_width())
-                py = random.randint(-300, -50)
-                powerup_rect = missil_img.get_rect(topleft=(px, py))
+            # chance de 10% de um meteoro ser powerup ou vida
+            if random.random() < 0.1:
+                if random.random() < 0.5:
+                    # chance de 50% de ser powerup
+                    px = random.randint(0, WIDTH - missil_img.get_width())
+                    py = random.randint(-300, -50)
+                    powerup_rect = missil_img.get_rect(topleft=(px, py))
 
-                missil_powerups.append(powerup_rect)
-            # Chance de 5% de nascer um meteoro de vida
-            if random.random() < 0.05:
-                lx = random.randint(0, WIDTH - 40)
-                ly = random.randint(-300, -40)
-                life_meteor_list.append(pygame.Rect(lx, ly, 40, 40))
+                    missil_powerups.append(powerup_rect)
+                else:
+                    # chance de 50% de ser meteoro de vida
+                    lx = random.randint(0, WIDTH - 40)
+                    ly = random.randint(-300, -40)
+                    life_meteor_list.append(pygame.Rect(lx, ly, 40, 40))
 
             score += 1
             if sound_point:
@@ -197,6 +204,23 @@ while running:
 
         elif power.y > HEIGHT:
             missil_powerups.remove(power)
+
+    # ------------------------------------------------------
+    # MOVIMENTO DO METEORO DE VIDA
+    # ------------------------------------------------------
+
+    for lm in life_meteor_list[:]:
+        lm.y += meteor_speed
+
+        if lm.y > HEIGHT:
+            life_meteor_list.remove(lm)
+
+        # Colisão com meteoro de vida → ganha 1 vida
+        if lm.colliderect(player_rect):
+            lives += 1
+            if sound_life:
+                sound_life.play()
+            life_meteor_list.remove(lm)
 
     # ------------------------------------------------------
     # DISPARO AUTOMÁTICO DE MÍSSIL
@@ -238,17 +262,6 @@ while running:
     # ------------------------------------------------------
     # DESENHO DOS ELEMENTOS
     # ------------------------------------------------------
-    # --- Movimento dos meteoros de vida ---
-    for lm in life_meteor_list[:]:
-        lm.y += meteor_speed
-
-        if lm.y > HEIGHT:
-            life_meteor_list.remove(lm)
-
-        # Colisão com meteoro de vida → ganha 1 vida
-        if lm.colliderect(player_rect):
-            lives += 1
-            life_meteor_list.remove(lm)
 
     # --- Desenha tudo ---
     screen.blit(player_img, player_rect)
