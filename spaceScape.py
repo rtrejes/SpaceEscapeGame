@@ -51,6 +51,8 @@ RED = (255, 60, 60)
 BLUE = (60, 100, 255)
 YELLOW = (255, 220, 0)
 PINK = (255, 120, 200)
+GREEN = (60, 255, 100)
+ORANGE = (255, 150, 50)
 
 # Tela do jogo
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
@@ -117,6 +119,11 @@ lives = 3
 font = pygame.font.Font(None, 36)
 clock = pygame.time.Clock()
 running = True
+
+# 🎮 Fontes para a tela final
+menu_font_large = pygame.font.Font(None, 72)
+menu_font_medium = pygame.font.Font(None, 48)
+menu_font_small = pygame.font.Font(None, 32)
 
 has_missil_power = False
 missil_timer = 0
@@ -292,17 +299,122 @@ while running:
 # 🏁 TELA DE FIM DE JOGO
 # ----------------------------------------------------------
 pygame.mixer.music.stop()
-screen.fill((20, 20, 20))
-end_text = font.render("Fim de jogo! Pressione qualquer tecla para sair.", True, WHITE)
-final_score = font.render(f"Pontuação final: {score}", True, WHITE)
-screen.blit(end_text, (150, 260))
-screen.blit(final_score, (300, 300))
-pygame.display.flip()
 
-waiting = True
-while waiting:
+# Variável para controlar a seleção dos botões
+selected_button = 0  # 0 = Reiniciar, 1 = Sair
+
+# Loop da tela final
+game_over_running = True
+while game_over_running:
+    # Desenha o fundo
+    screen.blit(background, (0, 0))
+    
+    # Overlay escuro para destaque
+    overlay = pygame.Surface((WIDTH, HEIGHT))
+    overlay.set_alpha(180)
+    overlay.fill((0, 0, 0))
+    screen.blit(overlay, (0, 0))
+    
+    # GAME OVER - Título principal
+    game_over_text = menu_font_large.render("GAME OVER", True, RED)
+    game_over_rect = game_over_text.get_rect(center=(WIDTH // 2, 100))
+    screen.blit(game_over_text, game_over_rect)
+    
+    # Linha decorativa superior
+    pygame.draw.line(screen, YELLOW, (WIDTH // 2 - 200, 150), (WIDTH // 2 + 200, 150), 3)
+    
+    # Label "PONTUAÇÃO FINAL"
+    score_label = menu_font_small.render("PONTUAÇÃO FINAL", True, WHITE)
+    score_label_rect = score_label.get_rect(center=(WIDTH // 2, 200))
+    screen.blit(score_label, score_label_rect)
+    
+    # Pontuação em destaque
+    score_value = menu_font_large.render(str(score), True, YELLOW)
+    score_value_rect = score_value.get_rect(center=(WIDTH // 2, 260))
+    screen.blit(score_value, score_value_rect)
+    
+    # Linha decorativa inferior
+    pygame.draw.line(screen, YELLOW, (WIDTH // 2 - 200, 320), (WIDTH // 2 + 200, 320), 3)
+    
+    # Mensagem de agradecimento
+    thanks_text = menu_font_small.render("Obrigado por jogar!", True, WHITE)
+    thanks_rect = thanks_text.get_rect(center=(WIDTH // 2, 370))
+    screen.blit(thanks_text, thanks_rect)
+    
+    # BOTÕES - Reiniciar e Sair
+    button_y_start = 430
+    
+    # Botão Reiniciar
+    if selected_button == 0:
+        restart_text = menu_font_medium.render("> REINICIAR <", True, YELLOW)
+    else:
+        restart_text = menu_font_medium.render("REINICIAR", True, WHITE)
+    restart_rect = restart_text.get_rect(center=(WIDTH // 2, button_y_start))
+    screen.blit(restart_text, restart_rect)
+    
+    # Botão Sair
+    if selected_button == 1:
+        exit_text = menu_font_medium.render("> SAIR <", True, YELLOW)
+    else:
+        exit_text = menu_font_medium.render("SAIR", True, WHITE)
+    exit_rect = exit_text.get_rect(center=(WIDTH // 2, button_y_start + 60))
+    screen.blit(exit_text, exit_rect)
+    
+    # Instruções
+    instruction_text = menu_font_small.render("Use ↑↓ para navegar | ENTER para selecionar", True, ORANGE)
+    instruction_rect = instruction_text.get_rect(center=(WIDTH // 2, HEIGHT - 50))
+    screen.blit(instruction_text, instruction_rect)
+    
+    pygame.display.flip()
+    
+    # Eventos da tela final
     for event in pygame.event.get():
-        if event.type == pygame.QUIT or event.type == pygame.KEYDOWN:
-            waiting = False
+        if event.type == pygame.QUIT:
+            game_over_running = False
+            running = False
+        
+        if event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_UP:
+                selected_button = (selected_button - 1) % 2
+            elif event.key == pygame.K_DOWN:
+                selected_button = (selected_button + 1) % 2
+            elif event.key == pygame.K_RETURN:
+                if selected_button == 0:  # Reiniciar
+                    # Reseta o jogo
+                    score = 0
+                    lives = 3
+                    meteor_speed = 5
+                    player_rect.center = (WIDTH // 2, HEIGHT - 60)
+                    
+                    # Limpa listas
+                    meteor_list.clear()
+                    missil_powerups.clear()
+                    active_missils.clear()
+                    life_meteor_list.clear()
+                    
+                    # Recria meteoros
+                    for _ in range(5):
+                        x = random.randint(0, WIDTH - 40)
+                        y = random.randint(-500, -40)
+                        meteor_list.append(pygame.Rect(x, y, 40, 40))
+                    
+                    # Reseta power-ups
+                    has_missil_power = False
+                    missil_timer = 0
+                    missil_time_left = 0
+                    missil_end_time = 0
+                    
+                    # Reinicia música e jogo
+                    if os.path.exists(ASSETS["music"]):
+                        pygame.mixer.music.play(-1)
+                    
+                    game_over_running = False
+                    running = True
+                    
+                elif selected_button == 1:  # Sair
+                    game_over_running = False
+                    running = False
+    
+    clock.tick(FPS)
 
 pygame.quit()
