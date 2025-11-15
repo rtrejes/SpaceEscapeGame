@@ -75,7 +75,7 @@ background = load_image(ASSETS["background"], WHITE, (WIDTH, HEIGHT))
 player_img = load_image(ASSETS["player"], BLUE, (80, 60))
 meteor_img = load_image(ASSETS["meteor"], RED, (40, 40))
 missil_img = load_image(ASSETS["missil"], YELLOW)  # tamanho original
-life_meteor_img = load_image(ASSETS["life_meteor"], PINK, (70, 70))
+life_meteor_img = load_image(ASSETS["life_meteor"], WHITE, (55,75))
 
 
 # Sons
@@ -92,7 +92,7 @@ sound_life = load_sound(ASSETS["sound_life"])
 # Música de fundo (opcional)
 if os.path.exists(ASSETS["music"]):
     pygame.mixer.music.load(ASSETS["music"])
-    pygame.mixer.music.set_volume(0.3)
+    pygame.mixer.music.set_volume(0.15)
     pygame.mixer.music.play(-1)  # loop infinito
 
 # ----------------------------------------------------------
