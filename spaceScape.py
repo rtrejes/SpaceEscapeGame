@@ -104,11 +104,6 @@ missil_powerups = []
 active_missils = []
 life_meteor_list = []   # meteoro especial que dá vida
 
-for _ in range(5):
-    x = random.randint(0, WIDTH - 40)
-    y = random.randint(-500, -40)
-    meteor_list.append(pygame.Rect(x, y, 40, 40))
-
 meteor_speed = 5
 missil_speed = 10
 
@@ -118,11 +113,137 @@ font = pygame.font.Font(None, 36)
 clock = pygame.time.Clock()
 running = True
 
+# 🎮 Sistema de Menu Principal
+game_state = "MENU"  # pode ser: "MENU", "PLAYING", "PAUSED", "GAME_OVER"
+menu_font_large = pygame.font.Font(None, 72)
+menu_font_medium = pygame.font.Font(None, 48)
+menu_font_small = pygame.font.Font(None, 32)
+
+# Opções do menu
+menu_options = ["Jogar", "Controles", "Sair"]
+selected_option = 0
+
+# Cores do menu
+MENU_WHITE = (255, 255, 255)
+MENU_YELLOW = (255, 220, 0)
+MENU_GRAY = (150, 150, 150)
+
 has_missil_power = False
 missil_timer = 0
 missil_time_left = 0          # tempo restante do power
 missil_end_time = 0           # momento em que acaba
 
+# ----------------------------------------------------------
+# 🎮 FUNÇÕES DO MENU
+# ----------------------------------------------------------
+# 🎮 Função para desenhar o menu principal
+def draw_menu(screen, selected):
+    screen.blit(background, (0, 0))
+    
+    # Título do jogo
+    title = menu_font_large.render("SPACE ESCAPE", True, MENU_YELLOW)
+    title_rect = title.get_rect(center=(WIDTH // 2, 100))
+    screen.blit(title, title_rect)
+    
+    # Subtítulo
+    subtitle = menu_font_small.render("Desvie dos meteoros!", True, MENU_WHITE)
+    subtitle_rect = subtitle.get_rect(center=(WIDTH // 2, 160))
+    screen.blit(subtitle, subtitle_rect)
+    
+    # Opções do menu
+    for i, option in enumerate(menu_options):
+        if i == selected:
+            color = MENU_YELLOW
+            text = menu_font_medium.render(f"> {option} <", True, color)
+        else:
+            color = MENU_GRAY
+            text = menu_font_medium.render(option, True, color)
+        
+        text_rect = text.get_rect(center=(WIDTH // 2, 280 + i * 70))
+        screen.blit(text, text_rect)
+    
+    # Instruções na parte inferior
+    instructions = menu_font_small.render("Use ↑↓ para navegar | ENTER para selecionar", True, MENU_WHITE)
+    instructions_rect = instructions.get_rect(center=(WIDTH // 2, HEIGHT - 50))
+    screen.blit(instructions, instructions_rect)
+
+# 🎮 Função para desenhar tela de controles
+def draw_controls(screen):
+    screen.blit(background, (0, 0))
+    
+    # Título
+    title = menu_font_large.render("CONTROLES", True, MENU_YELLOW)
+    title_rect = title.get_rect(center=(WIDTH // 2, 80))
+    screen.blit(title, title_rect)
+    
+    # Controles
+    controls_text = [
+        "← → ↑ ↓  -  Mover a nave",
+        "",
+        "OBJETIVO:",
+        "Desvie dos meteoros vermelhos",
+        "Colete power-ups amarelos",
+        "Colete meteoros de vida (rosa)",
+        "",
+        "DICAS:",
+        "• Power-ups dão disparo automático por 10s",
+        "• A dificuldade aumenta com o tempo",
+        "• Cada colisão tira uma vida"
+    ]
+    
+    y_position = 180
+    for line in controls_text:
+        if line == "":
+            y_position += 20
+        else:
+            if line in ["OBJETIVO:", "DICAS:"]:
+                text = menu_font_medium.render(line, True, MENU_YELLOW)
+            else:
+                text = menu_font_small.render(line, True, MENU_WHITE)
+            text_rect = text.get_rect(center=(WIDTH // 2, y_position))
+            screen.blit(text, text_rect)
+            y_position += 40
+    
+    # Voltar
+    back_text = menu_font_small.render("Pressione ESC para voltar", True, MENU_YELLOW)
+    back_rect = back_text.get_rect(center=(WIDTH // 2, HEIGHT - 50))
+    screen.blit(back_text, back_rect)
+
+# 🎮 Função para resetar o jogo
+def reset_game():
+    global score, lives, meteor_list, missil_powerups, active_missils, life_meteor_list
+    global has_missil_power, missil_timer, missil_time_left, missil_end_time
+    global player_rect, meteor_speed
+    
+    # Reseta variáveis
+    score = 0
+    lives = 3
+    meteor_speed = 5
+    
+    # Reseta posição do jogador
+    player_rect.center = (WIDTH // 2, HEIGHT - 60)
+    
+    # Limpa listas
+    meteor_list.clear()
+    missil_powerups.clear()
+    active_missils.clear()
+    life_meteor_list.clear()
+    
+    # Recria meteoros iniciais
+    for _ in range(5):
+        x = random.randint(0, WIDTH - 40)
+        y = random.randint(-500, -40)
+        meteor_list.append(pygame.Rect(x, y, 40, 40))
+    
+    # Reseta power-ups
+    has_missil_power = False
+    missil_timer = 0
+    missil_time_left = 0
+    missil_end_time = 0
+    
+   # Reinicia música
+    if os.path.exists(ASSETS["music"]):
+        pygame.mixer.music.play(-1)
 # ----------------------------------------------------------
 # 🕹️ LOOP PRINCIPAL
 # ----------------------------------------------------------
@@ -134,6 +255,106 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+    
+    # 🎮 EVENTOS DO MENU
+        if game_state == "MENU":
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_UP:
+                    selected_option = (selected_option - 1) % len(menu_options)
+                elif event.key == pygame.K_DOWN:
+                    selected_option = (selected_option + 1) % len(menu_options)
+                elif event.key == pygame.K_RETURN:
+                    if selected_option == 0:  # Jogar
+                        reset_game()
+                        game_state = "PLAYING"
+                    elif selected_option == 1:  # Controles
+                        game_state = "CONTROLS"
+                    elif selected_option == 2:  # Sair
+                        running = False
+    
+    # 🎮 EVENTOS DURANTE O JOGO
+        elif game_state == "PLAYING":
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    game_state = "PAUSED"
+        
+    # 🎮 EVENTOS DO PAUSE
+        elif game_state == "PAUSED":
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    game_state = "PLAYING"
+                elif event.key == pygame.K_m:
+                    game_state = "MENU"
+        
+    # 🎮 EVENTOS DO GAME OVER
+        elif game_state == "GAME_OVER":
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    reset_game()
+                    game_state = "PLAYING"
+                elif event.key == pygame.K_m:
+                    game_state = "MENU"
+    # ========================================
+    # 🎮 RENDERIZAÇÃO BASEADA NO ESTADO
+    # ========================================
+    
+    if game_state == "MENU":
+        draw_menu(screen, selected_option)
+    
+    elif game_state == "CONTROLS":
+        draw_controls(screen)
+    
+    elif game_state == "PAUSED":
+        # Desenha o jogo congelado
+        screen.blit(background, (0, 0))
+        screen.blit(player_img, player_rect)
+        for meteor in meteor_list:
+            screen.blit(meteor_img, meteor)
+        for lm in life_meteor_list:
+            screen.blit(life_meteor_img, lm)
+        for power in missil_powerups:
+            screen.blit(missil_powerup_img, power)
+        for m in active_missils:
+            screen.blit(missil_shot_img, m)
+        
+        # HUD durante pause
+        text = font.render(f"Pontos: {score}   Vidas: {lives}", True, WHITE)
+        screen.blit(text, (10, 10))
+        if has_missil_power:
+            timer_txt = font.render(f"{missil_time_left}s", True, (255, 255, 0))
+            screen.blit(timer_txt, (WIDTH - 60, 10))
+        
+        # Overlay de pausa
+        pause_overlay = pygame.Surface((WIDTH, HEIGHT))
+        pause_overlay.set_alpha(128)
+        pause_overlay.fill((0, 0, 0))
+        screen.blit(pause_overlay, (0, 0))
+        
+        pause_text = menu_font_large.render("PAUSADO", True, MENU_YELLOW)
+        pause_rect = pause_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 50))
+        screen.blit(pause_text, pause_rect)
+        
+        resume_text = menu_font_small.render("ESC - Continuar | M - Menu", True, MENU_WHITE)
+        resume_rect = resume_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20))
+        screen.blit(resume_text, resume_rect)
+    
+    elif game_state == "GAME_OVER":
+        screen.fill((20, 20, 20))
+        
+        game_over_text = menu_font_large.render("GAME OVER", True, RED)
+        game_over_rect = game_over_text.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 80))
+        screen.blit(game_over_text, game_over_rect)
+        
+        final_score_text = menu_font_medium.render(f"Pontuação: {score}", True, MENU_WHITE)
+        final_score_rect = final_score_text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+        screen.blit(final_score_text, final_score_rect)
+        
+        restart_text = menu_font_small.render("ENTER - Jogar Novamente | M - Menu", True, MENU_YELLOW)
+        restart_rect = restart_text.get_rect(center=(WIDTH // 2, HEIGHT - 80))
+        screen.blit(restart_text, restart_rect)
+    
+    elif game_state == "PLAYING":
+        screen.blit(background, (0, 0))    
 
     # --- Movimento do jogador ---
     keys = pygame.key.get_pressed()
