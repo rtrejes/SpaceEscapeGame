@@ -118,6 +118,12 @@ font = pygame.font.Font(None, 36)
 clock = pygame.time.Clock()
 running = True
 
+# 🎮 Sistema de Dificuldade Progressiva
+difficulty_level = 1
+points_for_next_level = 10  # pontos necessários para subir de nível
+max_meteors = 5  # quantidade inicial de meteoros
+meteor_speed_base = 5  # velocidade base dos meteoros
+
 has_missil_power = False
 missil_timer = 0
 missil_time_left = 0          # tempo restante do power
@@ -175,6 +181,16 @@ while running:
             score += 1
             if sound_point:
                 sound_point.play()
+            
+            # 🎮 Sistema de Dificuldade Progressiva
+            if score >= difficulty_level * points_for_next_level:
+                difficulty_level += 1
+                meteor_speed += 0.5  # aumenta velocidade dos meteoros
+            
+            if difficulty_level % 2 == 0 and len(meteor_list) < 15:
+                    new_x = random.randint(0, WIDTH - 40)
+                    new_y = random.randint(-500, -40)
+                    meteor_list.append(pygame.Rect(new_x, new_y, 40, 40))
 
         # colisão com nave
         if meteor.colliderect(player_rect):
@@ -280,6 +296,10 @@ while running:
     # HUD (pontuação e vidas)
     text = font.render(f"Pontos: {score}   Vidas: {lives}", True, WHITE)
     screen.blit(text, (10, 10))
+    
+    # Mostra o nível atual
+    level_text = font.render(f"Nível: {difficulty_level}", True, WHITE)
+    screen.blit(level_text, (10, 50))
 
     # Timer do míssil (canto superior direito)
     if has_missil_power:
@@ -297,6 +317,8 @@ end_text = font.render("Fim de jogo! Pressione qualquer tecla para sair.", True,
 final_score = font.render(f"Pontuação final: {score}", True, WHITE)
 screen.blit(end_text, (150, 260))
 screen.blit(final_score, (300, 300))
+level_reached = font.render(f"Nível alcançado: {difficulty_level}", True, WHITE)
+screen.blit(level_reached, (300, 340))
 pygame.display.flip()
 
 waiting = True
