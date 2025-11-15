@@ -69,21 +69,19 @@ def load_image(filename, fallback_color, size=None):
         surf.fill(fallback_color)
         return surf
 
-
 # Carrega imagens
 background = load_image(ASSETS["background"], WHITE, (WIDTH, HEIGHT))
 player_img = load_image(ASSETS["player"], BLUE, (80, 60))
 meteor_img = load_image(ASSETS["meteor"], RED, (40, 40))
-missil_img = load_image(ASSETS["missil"], YELLOW)  # tamanho original
-life_meteor_img = load_image(ASSETS["life_meteor"], WHITE, (55,75))
-
+missil_powerup_img = load_image(ASSETS["missil"], YELLOW, (40,40))
+missil_shot_img = load_image(ASSETS["missil"], YELLOW, (30, 40))
+life_meteor_img = load_image(ASSETS["life_meteor"], PINK, (55, 75))
 
 # Sons
 def load_sound(filename):
     if os.path.exists(filename):
         return pygame.mixer.Sound(filename)
     return None
-
 
 sound_point = load_sound(ASSETS["sound_point"])
 sound_hit = load_sound(ASSETS["sound_hit"])
@@ -104,7 +102,7 @@ player_speed = 7
 meteor_list = []
 missil_powerups = []
 active_missils = []
-life_meteor_list = []  # meteoro especial que dá vida
+life_meteor_list = []   # meteoro especial que dá vida
 
 for _ in range(5):
     x = random.randint(0, WIDTH - 40)
@@ -122,8 +120,8 @@ running = True
 
 has_missil_power = False
 missil_timer = 0
-missil_time_left = 0  # tempo restante do power
-missil_end_time = 0  # momento em que acaba
+missil_time_left = 0          # tempo restante do power
+missil_end_time = 0           # momento em que acaba
 
 # ----------------------------------------------------------
 # 🕹️ LOOP PRINCIPAL
@@ -163,9 +161,9 @@ while running:
             if random.random() < 0.1:
                 if random.random() < 0.5:
                     # chance de 50% de ser powerup
-                    px = random.randint(0, WIDTH - missil_img.get_width())
+                    px = random.randint(0, WIDTH - missil_powerup_img.get_width())
                     py = random.randint(-300, -50)
-                    powerup_rect = missil_img.get_rect(topleft=(px, py))
+                    powerup_rect = missil_powerup_img.get_rect(topleft=(px, py))
 
                     missil_powerups.append(powerup_rect)
                 else:
@@ -227,8 +225,8 @@ while running:
     # ------------------------------------------------------
     if has_missil_power:
         missil_timer += 1
-        if missil_timer > 20:  # dispara a cada 20 frames
-            missil_rect = missil_img.get_rect(midbottom=player_rect.midtop)
+        if missil_timer > 10:  # dispara a cada 20 frames
+            missil_rect = missil_shot_img.get_rect(midbottom=player_rect.midtop)
             active_missils.append(missil_rect)
             missil_timer = 0
 
@@ -274,10 +272,10 @@ while running:
 
     # --- Exibe pontuação e vidas ---
     for power in missil_powerups:
-        screen.blit(missil_img, power)
+        screen.blit(missil_powerup_img, power)
 
     for m in active_missils:
-        screen.blit(missil_img, m)
+        screen.blit(missil_shot_img, m)
 
     # HUD (pontuação e vidas)
     text = font.render(f"Pontos: {score}   Vidas: {lives}", True, WHITE)
