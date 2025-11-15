@@ -72,7 +72,8 @@ def load_image(filename, fallback_color, size=None):
 background = load_image(ASSETS["background"], WHITE, (WIDTH, HEIGHT))
 player_img = load_image(ASSETS["player"], BLUE, (80, 60))
 meteor_img = load_image(ASSETS["meteor"], RED, (40, 40))
-missil_img = load_image(ASSETS["missil"], YELLOW)  # tamanho original
+missil_powerup_img = load_image(ASSETS["missil"], YELLOW, (40,40))
+missil_shot_img = load_image(ASSETS["missil"], YELLOW, (30, 40))
 life_meteor_img = load_image(ASSETS["life_meteor"], PINK, (40, 40))
 
 # Sons
@@ -156,9 +157,9 @@ while running:
 
             # chance de 5% de spawnar míssil
             if random.random() < 0.05:
-                px = random.randint(0, WIDTH - missil_img.get_width())
+                px = random.randint(0, WIDTH - missil_powerup_img.get_width())
                 py = random.randint(-300, -50)
-                powerup_rect = missil_img.get_rect(topleft=(px, py))
+                powerup_rect = missil_powerup_img.get_rect(topleft=(px, py))
 
                 missil_powerups.append(powerup_rect)
             # Chance de 5% de nascer um meteoro de vida
@@ -203,8 +204,8 @@ while running:
     # ------------------------------------------------------
     if has_missil_power:
         missil_timer += 1
-        if missil_timer > 20:  # dispara a cada 20 frames
-            missil_rect = missil_img.get_rect(midbottom=player_rect.midtop)
+        if missil_timer > 10:  # dispara a cada 20 frames
+            missil_rect = missil_shot_img.get_rect(midbottom=player_rect.midtop)
             active_missils.append(missil_rect)
             missil_timer = 0
 
@@ -261,10 +262,10 @@ while running:
 
     # --- Exibe pontuação e vidas ---
     for power in missil_powerups:
-        screen.blit(missil_img, power)
+        screen.blit(missil_powerup_img, power)
 
     for m in active_missils:
-        screen.blit(missil_img, m)
+        screen.blit(missil_shot_img, m)
 
     # HUD (pontuação e vidas)
     text = font.render(f"Pontos: {score}   Vidas: {lives}", True, WHITE)
