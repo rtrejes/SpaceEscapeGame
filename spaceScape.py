@@ -163,7 +163,7 @@ def draw_menu(screen, selected):
         screen.blit(text, text_rect)
     
     # Instruções na parte inferior
-    instructions = menu_font_small.render("Use ↑↓ para navegar | ENTER para selecionar", True, MENU_WHITE)
+    instructions = menu_font_small.render("Use as setas para navegar | ENTER para selecionar", True, MENU_WHITE)
     instructions_rect = instructions.get_rect(center=(WIDTH // 2, HEIGHT - 50))
     screen.blit(instructions, instructions_rect)
 
