@@ -118,9 +118,10 @@ running = True
 
 # 🎮 Sistema de Dificuldade Progressiva
 difficulty_level = 1
-points_for_next_level = 10  # pontos necessários para subir de nível
-max_meteors = 5  # quantidade inicial de meteoros
-meteor_speed_base = 5  # velocidade base dos meteoros
+next_level_score = 20
+growth_factor = 2
+level_up_message = ""
+level_up_timer = 0   # tempo que a mensagem fica na tela (em frames)
 # 🎮 Sistema de Menu Principal
 game_state = "MENU"  # pode ser: "MENU", "PLAYING", "PAUSED", "GAME_OVER"
 menu_font_large = pygame.font.Font(None, 72)
@@ -244,8 +245,7 @@ while running:
         draw_menu(screen, selected_option)
         pygame.display.flip()
         continue
-    
-    # 🎮 CÓDIGO ORIGINAL DOS SEUS COLEGAS (100% PRESERVADO)
+
     screen.blit(background, (0, 0))        
 
     # --- Movimento do jogador ---
@@ -290,14 +290,13 @@ while running:
                 sound_point.play()
             
             # 🎮 Sistema de Dificuldade Progressiva
-            if score >= difficulty_level * points_for_next_level:
+            if score >= next_level_score:
                 difficulty_level += 1
-                meteor_speed += 0.5  # aumenta velocidade dos meteoros
-            
-            if difficulty_level % 2 == 0 and len(meteor_list) < 15:
-                    new_x = random.randint(0, WIDTH - 40)
-                    new_y = random.randint(-500, -40)
-                    meteor_list.append(pygame.Rect(new_x, new_y, 40, 40))
+                meteor_speed += 0.75  # aumenta velocidade dos meteoros
+                level_up_message = f"Subiu de Nível: {difficulty_level}!"
+                level_up_timer = 120  # deixa mensagem por 120 frames (~2 segundos)
+                next_level_score = int(next_level_score * growth_factor)
+
 
         # colisão com nave
         if meteor.colliderect(player_rect):
@@ -417,6 +416,13 @@ while running:
     if has_missil_power:
         timer_txt = font.render(f"{missil_time_left}s", True, (255, 255, 0))
         screen.blit(timer_txt, (WIDTH - 60, 10))
+
+    # Mensagem de Level Up
+    if level_up_timer > 0:
+        msg = font.render(level_up_message, True, (255, 255, 0))
+        msg_rect = msg.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 100))
+        screen.blit(msg, msg_rect)
+        level_up_timer -= 1
 
     # Explosões temporárias
     for ex in explosoes[:]:
