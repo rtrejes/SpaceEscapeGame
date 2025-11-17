@@ -116,6 +116,12 @@ font = pygame.font.Font(None, 36)
 clock = pygame.time.Clock()
 running = True
 
+# 🎮 Sistema de Dificuldade Progressiva
+difficulty_level = 1
+next_level_score = 20
+growth_factor = 2
+level_up_message = ""
+level_up_timer = 0   # tempo que a mensagem fica na tela (em frames)
 # 🎮 Sistema de Menu Principal
 game_state = "MENU"  # pode ser: "MENU", "PLAYING", "PAUSED", "GAME_OVER"
 menu_font_large = pygame.font.Font(None, 72)
@@ -239,8 +245,7 @@ while running:
         draw_menu(screen, selected_option)
         pygame.display.flip()
         continue
-    
-    # 🎮 CÓDIGO ORIGINAL DOS SEUS COLEGAS (100% PRESERVADO)
+
     screen.blit(background, (0, 0))        
 
     # --- Movimento do jogador ---
@@ -283,6 +288,19 @@ while running:
             score += 1
             if sound_point:
                 sound_point.play()
+            
+            # 🎮 Sistema de Dificuldade Progressiva
+            if score >= next_level_score:
+                difficulty_level += 1
+                meteor_speed += 0.75  # aumenta velocidade dos meteoros
+                level_up_message = f"Subiu de Nível: {difficulty_level}!"
+                level_up_timer = 120  # deixa mensagem por 120 frames (~2 segundos)
+                next_level_score = int(next_level_score * growth_factor)
+                if difficulty_level % 2 == 0:
+                    new_meteor_x = random.randint(0, WIDTH - 40)
+                    new_meteor_y = random.randint(-300, -40)
+                    meteor_list.append(pygame.Rect(new_meteor_x, new_meteor_y, 40, 40))
+
 
         # colisão com nave
         if meteor.colliderect(player_rect):
@@ -393,11 +411,22 @@ while running:
     # HUD (pontuação e vidas)
     text = font.render(f"Pontos: {score}   Vidas: {lives}", True, WHITE)
     screen.blit(text, (10, 10))
+    
+    # Mostra o nível atual
+    level_text = font.render(f"Nível: {difficulty_level}", True, WHITE)
+    screen.blit(level_text, (10, 50))
 
     # Timer do míssil (canto superior direito)
     if has_missil_power:
         timer_txt = font.render(f"{missil_time_left}s", True, (255, 255, 0))
         screen.blit(timer_txt, (WIDTH - 60, 10))
+
+    # Mensagem de Level Up
+    if level_up_timer > 0:
+        msg = font.render(level_up_message, True, (255, 255, 0))
+        msg_rect = msg.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 100))
+        screen.blit(msg, msg_rect)
+        level_up_timer -= 1
 
     # Explosões temporárias
     for ex in explosoes[:]:
@@ -417,6 +446,8 @@ end_text = font.render("Fim de jogo! Pressione qualquer tecla para sair.", True,
 final_score = font.render(f"Pontuação final: {score}", True, WHITE)
 screen.blit(end_text, (150, 260))
 screen.blit(final_score, (300, 300))
+level_reached = font.render(f"Nível alcançado: {difficulty_level}", True, WHITE)
+screen.blit(level_reached, (300, 340))
 pygame.display.flip()
 
 waiting = True
