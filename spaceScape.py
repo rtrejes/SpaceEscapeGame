@@ -296,6 +296,10 @@ while running:
                 level_up_message = f"Subiu de Nível: {difficulty_level}!"
                 level_up_timer = 120  # deixa mensagem por 120 frames (~2 segundos)
                 next_level_score = int(next_level_score * growth_factor)
+                if difficulty_level % 2 == 0:
+                    new_meteor_x = random.randint(0, WIDTH - 40)
+                    new_meteor_y = random.randint(-300, -40)
+                    meteor_list.append(pygame.Rect(new_meteor_x, new_meteor_y, 40, 40))
 
 
         # colisão com nave
