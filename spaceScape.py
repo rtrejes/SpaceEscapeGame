@@ -133,288 +133,275 @@ missil_end_time = 0           # momento em que acaba
 # ----------------------------------------------------------
 # 🕹️ LOOP PRINCIPAL
 # ----------------------------------------------------------
-while running:
-    clock.tick(FPS)
-    screen.blit(background, (0, 0))
+jogo_rodando = True
 
-    # --- Eventos ---
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
+while jogo_rodando:
+    # ========================================
+    # INICIALIZA/RESETA VARIÁVEIS DO JOGO
+    # ========================================
+    meteor_list = []
+    missil_powerups = []
+    active_missils = []
+    life_meteor_list = []   # meteoro especial que dá vida
+    
+    for _ in range(5):
+        x = random.randint(0, WIDTH - 40)
+        y = random.randint(-500, -40)
+        meteor_list.append(pygame.Rect(x, y, 40, 40))
+    
+    score = 0
+    lives = 3
+    
+    has_missil_power = False
+    missil_timer = 0
+    missil_time_left = 0          # tempo restante do power
+    missil_end_time = 0           # momento em que acaba
+    
+    player_rect.center = (WIDTH // 2, HEIGHT - 60)
+    
+    # ========================================
+    # LOOP DO JOGO
+    # ========================================
+    running = True
+    
+    while running:
+        clock.tick(FPS)
+        screen.blit(background, (0, 0))
 
-    # --- Movimento do jogador ---
-    keys = pygame.key.get_pressed()
-    if keys[pygame.K_LEFT] and player_rect.left > 0:
-        player_rect.x -= player_speed
-    if keys[pygame.K_RIGHT] and player_rect.right < WIDTH:
-        player_rect.x += player_speed
-    if keys[pygame.K_UP] and player_rect.top > 0:
-        player_rect.y -= player_speed
-    if keys[pygame.K_DOWN] and player_rect.bottom < HEIGHT:
-        player_rect.y += player_speed
-
-    # ------------------------------------------------------
-    # MOVIMENTO E LÓGICA DOS METEOROS
-    # ------------------------------------------------------
-    for meteor in meteor_list:
-        meteor.y += meteor_speed
-
-        # Saiu da tela → reposiciona e soma pontos
-        if meteor.y > HEIGHT:
-            meteor.y = random.randint(-100, -40)
-            meteor.x = random.randint(0, WIDTH - meteor.width)
-
-            # chance de 10% de um meteoro ser powerup ou vida
-            if random.random() < 0.1:
-                if random.random() < 0.5:
-                    # chance de 50% de ser powerup
-                    px = random.randint(0, WIDTH - missil_powerup_img.get_width())
-                    py = random.randint(-300, -50)
-                    powerup_rect = missil_powerup_img.get_rect(topleft=(px, py))
-
-                    missil_powerups.append(powerup_rect)
-                else:
-                    # chance de 50% de ser meteoro de vida
-                    lx = random.randint(0, WIDTH - 40)
-                    ly = random.randint(-300, -40)
-                    life_meteor_list.append(pygame.Rect(lx, ly, 40, 40))
-
-            score += 1
-            if sound_point:
-                sound_point.play()
-
-        # colisão com nave
-        if meteor.colliderect(player_rect):
-            lives -= 1
-            meteor.y = random.randint(-100, -40)
-            meteor.x = random.randint(0, WIDTH - meteor.width)
-            if sound_hit:
-                sound_hit.play()
-            if lives <= 0:
+        # --- Eventos ---
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
                 running = False
+                jogo_rodando = False
 
-    # ------------------------------------------------------
-    # MOVIMENTO DOS POWERUPS
-    # ------------------------------------------------------
-    for power in missil_powerups[:]:
-        power.y += meteor_speed
+        # --- Movimento do jogador ---
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT] and player_rect.left > 0:
+            player_rect.x -= player_speed
+        if keys[pygame.K_RIGHT] and player_rect.right < WIDTH:
+            player_rect.x += player_speed
+        if keys[pygame.K_UP] and player_rect.top > 0:
+            player_rect.y -= player_speed
+        if keys[pygame.K_DOWN] and player_rect.bottom < HEIGHT:
+            player_rect.y += player_speed
 
-        if power.colliderect(player_rect):
-            has_missil_power = True
-            missil_powerups.remove(power)
+        # ------------------------------------------------------
+        # MOVIMENTO E LÓGICA DOS METEOROS
+        # ------------------------------------------------------
+        for meteor in meteor_list:
+            meteor.y += meteor_speed
 
-            # ❗ Ativa timer de 10 segundos
-            missil_time_left = 10
-            missil_end_time = pygame.time.get_ticks() + 10000
+            # Saiu da tela → reposiciona e soma pontos
+            if meteor.y > HEIGHT:
+                meteor.y = random.randint(-100, -40)
+                meteor.x = random.randint(0, WIDTH - meteor.width)
 
-        elif power.y > HEIGHT:
-            missil_powerups.remove(power)
+                # chance de 10% de um meteoro ser powerup ou vida
+                if random.random() < 0.1:
+                    if random.random() < 0.5:
+                        # chance de 50% de ser powerup
+                        px = random.randint(0, WIDTH - missil_powerup_img.get_width())
+                        py = random.randint(-300, -50)
+                        powerup_rect = missil_powerup_img.get_rect(topleft=(px, py))
+                        missil_powerups.append(powerup_rect)
+                    else:
+                        # chance de 50% de ser meteoro de vida
+                        lx = random.randint(0, WIDTH - 40)
+                        ly = random.randint(-300, -40)
+                        life_meteor_list.append(pygame.Rect(lx, ly, 40, 40))
 
-    # ------------------------------------------------------
-    # MOVIMENTO DO METEORO DE VIDA
-    # ------------------------------------------------------
+                score += 1
+                if sound_point:
+                    sound_point.play()
 
-    for lm in life_meteor_list[:]:
-        lm.y += meteor_speed
-
-        if lm.y > HEIGHT:
-            life_meteor_list.remove(lm)
-
-        # Colisão com meteoro de vida → ganha 1 vida
-        if lm.colliderect(player_rect):
-            lives += 1
-            if sound_life:
-                sound_life.play()
-            life_meteor_list.remove(lm)
-
-    # ------------------------------------------------------
-    # DISPARO AUTOMÁTICO DE MÍSSIL
-    # ------------------------------------------------------
-    if has_missil_power:
-        missil_timer += 1
-        if missil_timer > 10:  # dispara a cada 20 frames
-            missil_rect = missil_shot_img.get_rect(midbottom=player_rect.midtop)
-            active_missils.append(missil_rect)
-            missil_timer = 0
-
-        # atualiza contagem regressiva
-        now = pygame.time.get_ticks()
-        missil_time_left = max(0, (missil_end_time - now) // 1000)
-
-        # terminou o poder
-        if missil_time_left <= 0:
-            has_missil_power = False
-            active_missils.clear()
-
-    # ------------------------------------------------------
-    # MOVIMENTO DOS MÍSSEIS
-    # ------------------------------------------------------
-    for m in active_missils[:]:
-        m.y -= missil_speed
-
-        if m.y < -30:
-            active_missils.remove(m)
-        else:
-            for meteor in meteor_list:
-                if m.colliderect(meteor):
-                    meteor.y = random.randint(-100, -40)
-                    meteor.x = random.randint(0, WIDTH - meteor.width)
-                    active_missils.remove(m)
-                    if sound_point:
-                        sound_point.play()
-                    break
-
-    # ------------------------------------------------------
-    # DESENHO DOS ELEMENTOS
-    # ------------------------------------------------------
-
-    # --- Desenha tudo ---
-    screen.blit(player_img, player_rect)
-
-    for meteor in meteor_list:
-        screen.blit(meteor_img, meteor)
-
-    for lm in life_meteor_list:
-        screen.blit(life_meteor_img, lm)
-
-    # --- Exibe pontuação e vidas ---
-    for power in missil_powerups:
-        screen.blit(missil_powerup_img, power)
-
-    for m in active_missils:
-        screen.blit(missil_shot_img, m)
-
-    # HUD (pontuação e vidas)
-    text = font.render(f"Pontos: {score}   Vidas: {lives}", True, WHITE)
-    screen.blit(text, (10, 10))
-
-    # Timer do míssil (canto superior direito)
-    if has_missil_power:
-        timer_txt = font.render(f"{missil_time_left}s", True, (255, 255, 0))
-        screen.blit(timer_txt, (WIDTH - 60, 10))
-
-    pygame.display.flip()
-
-# ----------------------------------------------------------
-# 🏁 TELA DE FIM DE JOGO
-# ----------------------------------------------------------
-pygame.mixer.music.stop()
-
-# Variável para controlar a seleção dos botões
-selected_button = 0  # 0 = Reiniciar, 1 = Sair
-
-# Loop da tela final
-game_over_running = True
-while game_over_running:
-    # Desenha o fundo
-    screen.blit(background, (0, 0))
-    
-    # Overlay escuro para destaque
-    overlay = pygame.Surface((WIDTH, HEIGHT))
-    overlay.set_alpha(180)
-    overlay.fill((0, 0, 0))
-    screen.blit(overlay, (0, 0))
-    
-    # GAME OVER - Título principal
-    game_over_text = menu_font_large.render("GAME OVER", True, RED)
-    game_over_rect = game_over_text.get_rect(center=(WIDTH // 2, 100))
-    screen.blit(game_over_text, game_over_rect)
-    
-    # Linha decorativa superior
-    pygame.draw.line(screen, YELLOW, (WIDTH // 2 - 200, 150), (WIDTH // 2 + 200, 150), 3)
-    
-    # Label "PONTUAÇÃO FINAL"
-    score_label = menu_font_small.render("PONTUAÇÃO FINAL", True, WHITE)
-    score_label_rect = score_label.get_rect(center=(WIDTH // 2, 200))
-    screen.blit(score_label, score_label_rect)
-    
-    # Pontuação em destaque
-    score_value = menu_font_large.render(str(score), True, YELLOW)
-    score_value_rect = score_value.get_rect(center=(WIDTH // 2, 260))
-    screen.blit(score_value, score_value_rect)
-    
-    # Linha decorativa inferior
-    pygame.draw.line(screen, YELLOW, (WIDTH // 2 - 200, 320), (WIDTH // 2 + 200, 320), 3)
-    
-    # Mensagem de agradecimento
-    thanks_text = menu_font_small.render("Obrigado por jogar!", True, WHITE)
-    thanks_rect = thanks_text.get_rect(center=(WIDTH // 2, 370))
-    screen.blit(thanks_text, thanks_rect)
-    
-    # BOTÕES - Reiniciar e Sair
-    button_y_start = 430
-    
-    # Botão Reiniciar
-    if selected_button == 0:
-        restart_text = menu_font_medium.render("> REINICIAR <", True, YELLOW)
-    else:
-        restart_text = menu_font_medium.render("REINICIAR", True, WHITE)
-    restart_rect = restart_text.get_rect(center=(WIDTH // 2, button_y_start))
-    screen.blit(restart_text, restart_rect)
-    
-    # Botão Sair
-    if selected_button == 1:
-        exit_text = menu_font_medium.render("> SAIR <", True, YELLOW)
-    else:
-        exit_text = menu_font_medium.render("SAIR", True, WHITE)
-    exit_rect = exit_text.get_rect(center=(WIDTH // 2, button_y_start + 60))
-    screen.blit(exit_text, exit_rect)
-    
-    # Instruções
-    instruction_text = menu_font_small.render("Use ↑↓ para navegar | ENTER para selecionar", True, ORANGE)
-    instruction_rect = instruction_text.get_rect(center=(WIDTH // 2, HEIGHT - 50))
-    screen.blit(instruction_text, instruction_rect)
-    
-    pygame.display.flip()
-    
-    # Eventos da tela final
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            game_over_running = False
-            running = False
-        
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_UP:
-                selected_button = (selected_button - 1) % 2
-            elif event.key == pygame.K_DOWN:
-                selected_button = (selected_button + 1) % 2
-            elif event.key == pygame.K_RETURN:
-                if selected_button == 0:  # Reiniciar
-                    # Reseta o jogo
-                    score = 0
-                    lives = 3
-                    meteor_speed = 5
-                    player_rect.center = (WIDTH // 2, HEIGHT - 60)
-                    
-                    # Limpa listas
-                    meteor_list.clear()
-                    missil_powerups.clear()
-                    active_missils.clear()
-                    life_meteor_list.clear()
-                    
-                    # Recria meteoros
-                    for _ in range(5):
-                        x = random.randint(0, WIDTH - 40)
-                        y = random.randint(-500, -40)
-                        meteor_list.append(pygame.Rect(x, y, 40, 40))
-                    
-                    # Reseta power-ups
-                    has_missil_power = False
-                    missil_timer = 0
-                    missil_time_left = 0
-                    missil_end_time = 0
-                    
-                    # Reinicia música e jogo
-                    if os.path.exists(ASSETS["music"]):
-                        pygame.mixer.music.play(-1)
-                    
-                    game_over_running = False
-                    running = True
-                    
-                elif selected_button == 1:  # Sair
-                    game_over_running = False
+            # colisão com nave
+            if meteor.colliderect(player_rect):
+                lives -= 1
+                meteor.y = random.randint(-100, -40)
+                meteor.x = random.randint(0, WIDTH - meteor.width)
+                if sound_hit:
+                    sound_hit.play()
+                if lives <= 0:
                     running = False
-    
-    clock.tick(FPS)
+
+        # ------------------------------------------------------
+        # MOVIMENTO DOS POWERUPS
+        # ------------------------------------------------------
+        for power in missil_powerups[:]:
+            power.y += meteor_speed
+
+            if power.colliderect(player_rect):
+                has_missil_power = True
+                missil_powerups.remove(power)
+
+                # ❗ Ativa timer de 10 segundos
+                missil_time_left = 10
+                missil_end_time = pygame.time.get_ticks() + 10000
+
+            elif power.y > HEIGHT:
+                missil_powerups.remove(power)
+
+        # ------------------------------------------------------
+        # MOVIMENTO DO METEORO DE VIDA
+        # ------------------------------------------------------
+
+        for lm in life_meteor_list[:]:
+            lm.y += meteor_speed
+
+            if lm.y > HEIGHT:
+                life_meteor_list.remove(lm)
+
+            # Colisão com meteoro de vida → ganha 1 vida
+            if lm.colliderect(player_rect):
+                lives += 1
+                if sound_life:
+                    sound_life.play()
+                life_meteor_list.remove(lm)
+
+        # ------------------------------------------------------
+        # DISPARO AUTOMÁTICO DE MÍSSIL
+        # ------------------------------------------------------
+        if has_missil_power:
+            missil_timer += 1
+            if missil_timer > 10:  # dispara a cada 20 frames
+                missil_rect = missil_shot_img.get_rect(midbottom=player_rect.midtop)
+                active_missils.append(missil_rect)
+                missil_timer = 0
+
+            # atualiza contagem regressiva
+            now = pygame.time.get_ticks()
+            missil_time_left = max(0, (missil_end_time - now) // 1000)
+
+            # terminou o poder
+            if missil_time_left <= 0:
+                has_missil_power = False
+                active_missils.clear()
+
+        # ------------------------------------------------------
+        # MOVIMENTO DOS MÍSSEIS
+        # ------------------------------------------------------
+        for m in active_missils[:]:
+            m.y -= missil_speed
+
+            if m.y < -30:
+                active_missils.remove(m)
+            else:
+                for meteor in meteor_list:
+                    if m.colliderect(meteor):
+                        meteor.y = random.randint(-100, -40)
+                        meteor.x = random.randint(0, WIDTH - meteor.width)
+                        active_missils.remove(m)
+                        if sound_point:
+                            sound_point.play()
+                        break
+
+        # ------------------------------------------------------
+        # DESENHO DOS ELEMENTOS
+        # ------------------------------------------------------
+
+        # --- Desenha tudo ---
+        screen.blit(player_img, player_rect)
+
+        for meteor in meteor_list:
+            screen.blit(meteor_img, meteor)
+
+        for lm in life_meteor_list:
+            screen.blit(life_meteor_img, lm)
+
+        # --- Exibe pontuação e vidas ---
+        for power in missil_powerups:
+            screen.blit(missil_powerup_img, power)
+
+        for m in active_missils:
+            screen.blit(missil_shot_img, m)
+
+        # HUD (pontuação e vidas)
+        text = font.render(f"Pontos: {score}   Vidas: {lives}", True, WHITE)
+        screen.blit(text, (10, 10))
+
+        # Timer do míssil (canto superior direito)
+        if has_missil_power:
+            timer_txt = font.render(f"{missil_time_left}s", True, (255, 255, 0))
+            screen.blit(timer_txt, (WIDTH - 60, 10))
+
+        pygame.display.flip()
+
+    # ----------------------------------------------------------
+    # 🏁 TELA DE FIM DE JOGO
+    # ----------------------------------------------------------
+    if jogo_rodando:
+        pygame.mixer.music.stop()
+        
+        selected_button = 0
+        tela_final_ativa = True
+        
+        while tela_final_ativa:
+            screen.blit(background, (0, 0))
+            
+            overlay = pygame.Surface((WIDTH, HEIGHT))
+            overlay.set_alpha(180)
+            overlay.fill((0, 0, 0))
+            screen.blit(overlay, (0, 0))
+            
+            game_over_text = menu_font_large.render("GAME OVER", True, RED)
+            game_over_rect = game_over_text.get_rect(center=(WIDTH // 2, 100))
+            screen.blit(game_over_text, game_over_rect)
+            
+            pygame.draw.line(screen, YELLOW, (WIDTH // 2 - 200, 150), (WIDTH // 2 + 200, 150), 3)
+            
+            score_label = menu_font_small.render("PONTUAÇÃO FINAL", True, WHITE)
+            score_label_rect = score_label.get_rect(center=(WIDTH // 2, 200))
+            screen.blit(score_label, score_label_rect)
+            
+            score_value = menu_font_large.render(str(score), True, YELLOW)
+            score_value_rect = score_value.get_rect(center=(WIDTH // 2, 260))
+            screen.blit(score_value, score_value_rect)
+            
+            pygame.draw.line(screen, YELLOW, (WIDTH // 2 - 200, 320), (WIDTH // 2 + 200, 320), 3)
+            
+            thanks_text = menu_font_small.render("Obrigado por jogar!", True, WHITE)
+            thanks_rect = thanks_text.get_rect(center=(WIDTH // 2, 370))
+            screen.blit(thanks_text, thanks_rect)
+            
+            button_y_start = 430
+            
+            if selected_button == 0:
+                restart_text = menu_font_medium.render("> REINICIAR <", True, YELLOW)
+            else:
+                restart_text = menu_font_medium.render("REINICIAR", True, WHITE)
+            restart_rect = restart_text.get_rect(center=(WIDTH // 2, button_y_start))
+            screen.blit(restart_text, restart_rect)
+            
+            if selected_button == 1:
+                exit_text = menu_font_medium.render("> SAIR <", True, YELLOW)
+            else:
+                exit_text = menu_font_medium.render("SAIR", True, WHITE)
+            exit_rect = exit_text.get_rect(center=(WIDTH // 2, button_y_start + 60))
+            screen.blit(exit_text, exit_rect)
+               
+            pygame.display.flip()
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    tela_final_ativa = False
+                    jogo_rodando = False
+                
+                if event.type == pygame.KEYDOWN:
+                    if event.key == pygame.K_UP:
+                        selected_button = (selected_button - 1) % 2
+                    elif event.key == pygame.K_DOWN:
+                        selected_button = (selected_button + 1) % 2
+                    elif event.key == pygame.K_RETURN:
+                        if selected_button == 0:  # Reiniciar
+                            tela_final_ativa = False
+                            # Volta pro loop externo e recomeça!
+                            if os.path.exists(ASSETS["music"]):
+                                pygame.mixer.music.play(-1)
+                            
+                        elif selected_button == 1:  # Sair
+                            tela_final_ativa = False
+                            jogo_rodando = False
+            
+            clock.tick(FPS)
 
 pygame.quit()
