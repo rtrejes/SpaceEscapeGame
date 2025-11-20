@@ -191,15 +191,20 @@ def draw_menu(screen, selected):
 
 # 🎮 Função para resetar o jogo
 def reset_game():
-    global score, lives, meteor_list, missil_powerups, active_missils, life_meteor_list
+    global score, lives, meteor_list, missil_powerups, active_missils, life_meteor_list, explosoes
     global has_missil_power, missil_timer, missil_time_left, missil_end_time
-    global player_rect, meteor_speed
+    global player_rect, meteor_speed, difficulty_level, next_level_score, level_up_message, level_up_timer, growth_factor
     global total_meteors_spawned, powerups_collected, missiles_fired, missiles_hit, lives_lost, start_time_ticks
 
     # Reseta variáveis
     score = 0
     lives = 3
     meteor_speed = 5
+    difficulty_level = 1
+    next_level_score = 20
+    growth_factor = 2
+    level_up_message = ""
+    level_up_timer = 0
     
     # Reseta posição do jogador
     player_rect.center = (WIDTH // 2, HEIGHT - 60)
@@ -264,12 +269,7 @@ while jogo_rodando:  # ← MUDANÇA: while jogo_rodando
                         selected_option = (selected_option + 1) % len(menu_options)
                     elif event.key == pygame.K_RETURN:
                         if selected_option == 0:  # Jogar
-                            # Cria meteoros iniciais
-                            for _ in range(5):
-                                x = random.randint(0, WIDTH - 40)
-                                y = random.randint(-500, -40)
-                                meteor_list.append(pygame.Rect(x, y, 40, 40))
-                                total_meteors_spawned += 1  # ADDED: conta meteoros gerados ao iniciar pelo menu
+                            # NÃO cria meteoros aqui - reset_game() já fez isso!
                             game_state = "PLAYING"
                             # marca tempo de início quando começar a jogar
                             start_time_ticks = pygame.time.get_ticks()
