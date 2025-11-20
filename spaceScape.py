@@ -348,9 +348,10 @@ while running:
             # 🎮 Sistema de Dificuldade Progressiva
             if score >= next_level_score:
                 difficulty_level += 1
-                meteor_speed += 0.75  # aumenta velocidade dos meteoros
-                level_up_message = f"Subiu de Nível: {difficulty_level}!"
-                level_up_timer = 120  # deixa mensagem por 120 frames (~2 segundos)
+                meteor_speed += 0.65  # aumenta velocidade dos meteoros
+                level_up_message = (f"Subiu de Nível!")
+                current_level_message = (f"Nível atual: {difficulty_level}")
+                level_up_timer = 180  # deixa mensagem por 180 frames (~3 segundos)
                 next_level_score = int(next_level_score * growth_factor)
                 if difficulty_level % 2 == 0: # Cria 2 meteoros a cada level up par (Nível 2, 4, 6, 8...)
                     new_meteor_x = random.randint(0, WIDTH - 40)
@@ -508,7 +509,10 @@ while running:
     if level_up_timer > 0:
         msg = font.render(level_up_message, True, (255, 255, 0))
         msg_rect = msg.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 100))
+        current_lvl_msg = font.render(current_level_message, True, (255, 255, 0))
+        current_lvl_msg_rect = current_lvl_msg.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 70))
         screen.blit(msg, msg_rect)
+        screen.blit(current_lvl_msg, current_lvl_msg_rect)
         level_up_timer -= 1
 
     # Explosões temporárias
