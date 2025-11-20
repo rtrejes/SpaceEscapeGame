@@ -13,7 +13,6 @@
 import pygame
 import random
 import os
-import math
 
 # Inicializa o PyGame
 pygame.init()
@@ -123,6 +122,7 @@ difficulty_level = 1
 next_level_score = 20
 growth_factor = 2
 level_up_message = ""
+current_level_message = ""
 level_up_timer = 0   # tempo que a mensagem fica na tela (em frames)
 # 🎮 Sistema de Menu Principal
 game_state = "MENU"  # pode ser: "MENU", "PLAYING", "PAUSED", "GAME_OVER"
@@ -147,7 +147,6 @@ missil_end_time = 0           # momento em que acaba
 # ----------------------------------------------------------
 # 🟢 ADDED STATISTICS (não altera lógica do jogo, só registra dados)
 # ----------------------------------------------------------
-total_meteors_spawned = 0
 powerups_collected = 0
 missiles_fired = 0
 missiles_hit = 0
@@ -193,8 +192,8 @@ def draw_menu(screen, selected):
 def reset_game():
     global score, lives, meteor_list, missil_powerups, active_missils, life_meteor_list, explosoes
     global has_missil_power, missil_timer, missil_time_left, missil_end_time
-    global player_rect, meteor_speed, difficulty_level, next_level_score, level_up_message, level_up_timer, growth_factor
-    global total_meteors_spawned, powerups_collected, missiles_fired, missiles_hit, lives_lost, start_time_ticks
+    global player_rect, meteor_speed, difficulty_level, next_level_score, level_up_message, current_level_message, level_up_timer, growth_factor
+    global powerups_collected, missiles_fired, missiles_hit, lives_lost, start_time_ticks
 
     # Reseta variáveis
     score = 0
@@ -204,8 +203,9 @@ def reset_game():
     next_level_score = 20
     growth_factor = 2
     level_up_message = ""
+    current_level_message = ""
     level_up_timer = 0
-    
+
     # Reseta posição do jogador
     player_rect.center = (WIDTH // 2, HEIGHT - 60)
     
@@ -220,7 +220,6 @@ def reset_game():
         x = random.randint(0, WIDTH - 40)
         y = random.randint(-500, -40)
         meteor_list.append(pygame.Rect(x, y, 40, 40))
-        total_meteors_spawned += 1  # ADDED: conta meteoros gerados inicialmente
     
     # Reseta power-ups
     has_missil_power = False
@@ -245,12 +244,12 @@ def reset_game():
 jogo_rodando = True  # ← MUDANÇA: Loop externo para permitir reiniciar
 
 while jogo_rodando:  # ← MUDANÇA: while jogo_rodando
-    
+
     # ← MUDANÇA: Reseta o jogo
     reset_game()
-    
+
     running = True  # ← MUDANÇA: running dentro do loop externo
-    
+
     while running:
         clock.tick(FPS)
 
@@ -259,7 +258,7 @@ while jogo_rodando:  # ← MUDANÇA: while jogo_rodando
             if event.type == pygame.QUIT:
                 running = False
                 jogo_rodando = False  # ← MUDANÇA: Sai dos dois loops
-            
+
             # 🎮 ADIÇÃO: Eventos do Menu
             if game_state == "MENU":
                 if event.type == pygame.KEYDOWN:
@@ -276,14 +275,14 @@ while jogo_rodando:  # ← MUDANÇA: while jogo_rodando
                         elif selected_option == 1:  # Sair
                             running = False
                             jogo_rodando = False  # ← MUDANÇA: Sai dos dois loops
-        
+
         # 🎮 ADIÇÃO: Renderiza Menu
         if game_state == "MENU":
             draw_menu(screen, selected_option)
             pygame.display.flip()
             continue
 
-        screen.blit(background, (0, 0))        
+        screen.blit(background, (0, 0))
 
         # --- Movimento do jogador ---
         keys = pygame.key.get_pressed()
@@ -307,39 +306,73 @@ while jogo_rodando:  # ← MUDANÇA: while jogo_rodando
                 meteor.y = random.randint(-100, -40)
                 meteor.x = random.randint(0, WIDTH - meteor.width)
 
-                # chance de 10% de um meteoro ser powerup ou vida
-                if random.random() < 0.1:
-                    if random.random() < 0.5:
-                        # chance de 50% de ser powerup
-                        px = random.randint(0, WIDTH - missil_powerup_img.get_width())
-                        py = random.randint(-300, -50)
-                        powerup_rect = missil_powerup_img.get_rect(topleft=(px, py))
+                # chance de 9% de um meteoro ser powerup ou vida
+                if difficulty_level < 3:
+                    if random.random() < 0.09:
+                        if random.random() < 0.9:
+                            # chance de 90% de ser powerup
+                            px = random.randint(0, WIDTH - missil_powerup_img.get_width())
+                            py = random.randint(-300, -50)
+                            powerup_rect = missil_powerup_img.get_rect(topleft=(px, py))
 
-                        missil_powerups.append(powerup_rect)
-                    else:
-                        # chance de 50% de ser meteoro de vida
-                        lx = random.randint(0, WIDTH - 40)
-                        ly = random.randint(-300, -40)
-                        life_meteor_list.append(pygame.Rect(lx, ly, 40, 40))
+                            missil_powerups.append(powerup_rect)
+                        else:
+                            # chance de 10% de ser meteoro de vida
+                            lx = random.randint(0, WIDTH - 40)
+                            ly = random.randint(-300, -40)
+                            life_meteor_list.append(pygame.Rect(lx, ly, 40, 40))
+
+                # chance de 5% de um meteoro ser powerup ou vida
+                if difficulty_level >= 3 and difficulty_level < 7:
+                    if random.random() < 0.05:
+                        if random.random() < 0.90:
+                            # chance de 90% de ser powerup
+                            px = random.randint(0, WIDTH - missil_powerup_img.get_width())
+                            py = random.randint(-300, -50)
+                            powerup_rect = missil_powerup_img.get_rect(topleft=(px, py))
+
+                            missil_powerups.append(powerup_rect)
+                        else:
+                            # chance de 10% de ser meteoro de vida
+                            lx = random.randint(0, WIDTH - 40)
+                            ly = random.randint(-300, -40)
+                            life_meteor_list.append(pygame.Rect(lx, ly, 40, 40))
+
+                # chance de 2.5% de um meteoro ser powerup ou vida
+                if difficulty_level >= 7:
+                    if random.random() < 0.025:
+                        if random.random() < 0.9:
+                            # chance de 90% de ser powerup
+                            px = random.randint(0, WIDTH - missil_powerup_img.get_width())
+                            py = random.randint(-300, -50)
+                            powerup_rect = missil_powerup_img.get_rect(topleft=(px, py))
+                            missil_powerups.append(powerup_rect)
+                        else:
+                            # chance de 10% de ser meteoro de vida
+                            lx = random.randint(0, WIDTH - 40)
+                            ly = random.randint(-300, -40)
+                            life_meteor_list.append(pygame.Rect(lx, ly, 40, 40))
 
                 score += 1
                 # ADDED: score reflete meteoros evitados (mantido)
                 if sound_point:
                     sound_point.play()
-                
+
                 # 🎮 Sistema de Dificuldade Progressiva
                 if score >= next_level_score:
                     difficulty_level += 1
-                    meteor_speed += 0.75  # aumenta velocidade dos meteoros
-                    level_up_message = f"Subiu de Nível: {difficulty_level}!"
-                    level_up_timer = 120  # deixa mensagem por 120 frames (~2 segundos)
+                    meteor_speed += 0.65  # aumenta velocidade dos meteoros
+                    level_up_message = (f"Subiu de Nível!")
+                    current_level_message = (f"Nível atual: {difficulty_level}")
+                    level_up_timer = 180  # deixa mensagem por 180 frames (~3 segundos)
                     next_level_score = int(next_level_score * growth_factor)
-                    if difficulty_level % 2 == 0:
+                    if difficulty_level % 2 == 0:  # Cria 2 meteoros a cada level up par (Nível 2, 4, 6, 8...)
                         new_meteor_x = random.randint(0, WIDTH - 40)
                         new_meteor_y = random.randint(-300, -40)
                         meteor_list.append(pygame.Rect(new_meteor_x, new_meteor_y, 40, 40))
-                        total_meteors_spawned += 1  # ADDED: conta meteoros criados por level-up
-
+                        new_meteor_x = random.randint(0, WIDTH - 40)
+                        new_meteor_y = random.randint(-300, -40)
+                        meteor_list.append(pygame.Rect(new_meteor_x, new_meteor_y, 40, 40))
 
             # colisão com nave
             if meteor.colliderect(player_rect):
@@ -393,11 +426,30 @@ while jogo_rodando:  # ← MUDANÇA: while jogo_rodando
         # ------------------------------------------------------
         if has_missil_power:
             missil_timer += 1
-            if missil_timer > 10:  # dispara a cada 20 frames
-                missil_rect = missil_shot_img.get_rect(midbottom=player_rect.midtop)
-                active_missils.append(missil_rect)
-                missil_timer = 0
-                missiles_fired += 1  # ADDED: conta mísseis disparados
+            if difficulty_level == 1:
+                if missil_timer > 30:  # dispara a cada 25 frames
+                    missil_rect = missil_shot_img.get_rect(midbottom=player_rect.midtop)
+                    active_missils.append(missil_rect)
+                    missil_timer = 0
+                    missiles_fired += 1  # ADDED: conta mísseis disparados
+            if difficulty_level >= 2 and difficulty_level <= 4:
+                if missil_timer > 20:  # dispara a cada 15 frames
+                    missil_rect = missil_shot_img.get_rect(midbottom=player_rect.midtop)
+                    active_missils.append(missil_rect)
+                    missil_timer = 0
+                    missiles_fired += 1  # ADDED: conta mísseis disparados
+            if difficulty_level >= 5 and difficulty_level <= 7:
+                if missil_timer > 10:  # dispara a cada 5 frames
+                    missil_rect = missil_shot_img.get_rect(midbottom=player_rect.midtop)
+                    active_missils.append(missil_rect)
+                    missil_timer = 0
+                    missiles_fired += 1  # ADDED: conta mísseis disparados
+            if difficulty_level > 7:
+                if missil_timer > 5:  # dispara a cada 3 frames
+                    missil_rect = missil_shot_img.get_rect(midbottom=player_rect.midtop)
+                    active_missils.append(missil_rect)
+                    missil_timer = 0
+                    missiles_fired += 1  # ADDED: conta mísseis disparados
 
             # atualiza contagem regressiva
             now = pygame.time.get_ticks()
@@ -455,7 +507,7 @@ while jogo_rodando:  # ← MUDANÇA: while jogo_rodando
         # HUD (pontuação e vidas)
         text = font.render(f"Pontos: {score}   Vidas: {lives}", True, WHITE)
         screen.blit(text, (10, 10))
-        
+
         # Mostra o nível atual
         level_text = font.render(f"Nível: {difficulty_level}", True, WHITE)
         screen.blit(level_text, (10, 50))
@@ -468,8 +520,23 @@ while jogo_rodando:  # ← MUDANÇA: while jogo_rodando
         # Mensagem de Level Up
         if level_up_timer > 0:
             msg = font.render(level_up_message, True, (255, 255, 0))
-            msg_rect = msg.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 100))
+            current_lvl_msg = font.render(current_level_message, True, (255, 255, 0))
+            padding = 20
+            total_width = max(msg.get_width(), current_lvl_msg.get_width()) + padding * 2
+            total_height = msg.get_height() + current_lvl_msg.get_height() + padding * 3
+            fundo = pygame.Surface((total_width, total_height))
+            fundo.set_alpha(140)  # transparência (0=totalmente transparente, 255=opaco)
+            fundo.fill((0, 0, 0))  # cor do fundo (preto)
+            fundo_rect = fundo.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 180))
+            screen.blit(fundo, fundo_rect)
+            msg_rect = msg.get_rect(center=(WIDTH // 2, fundo_rect.centery - 20))
+            current_lvl_msg_rect = current_lvl_msg.get_rect(center=(WIDTH // 2, fundo_rect.centery + 20))
+
             screen.blit(msg, msg_rect)
+            screen.blit(current_lvl_msg, current_lvl_msg_rect)
+
+            screen.blit(msg, msg_rect)
+            screen.blit(current_lvl_msg, current_lvl_msg_rect)
             level_up_timer -= 1
 
         # Explosões temporárias
@@ -486,43 +553,42 @@ while jogo_rodando:  # ← MUDANÇA: while jogo_rodando
     # ----------------------------------------------------------
     if jogo_rodando:  # ← MUDANÇA: Só mostra se não fechou a janela
         pygame.mixer.music.stop()
-        
+
         # Calcula tempo de jogo
         if start_time_ticks is None:
             play_seconds = 0
         else:
             play_seconds = max(0, (pygame.time.get_ticks() - start_time_ticks) // 1000)
-        
+
         selected_button = 0
         tela_final_ativa = True
-        
+
         while tela_final_ativa:
             screen.blit(background, (0, 0))
-            
+
             overlay = pygame.Surface((WIDTH, HEIGHT))
             overlay.set_alpha(180)
             overlay.fill((0, 0, 0))
             screen.blit(overlay, (0, 0))
-            
+
             # GAME OVER
             game_over_text = menu_font_large.render("GAME OVER", True, RED)
             game_over_rect = game_over_text.get_rect(center=(WIDTH // 2, 60))
             screen.blit(game_over_text, game_over_rect)
-            
+
             # Score e nível
             score_text = menu_font_medium.render(f"Score: {score}", True, YELLOW)
             score_rect = score_text.get_rect(center=(WIDTH // 2, 130))
             screen.blit(score_text, score_rect)
-            
+
             level_text = menu_font_small.render(f"Nível: {difficulty_level}", True, WHITE)
             level_rect = level_text.get_rect(center=(WIDTH // 2, 170))
             screen.blit(level_text, level_rect)
-            
+
             # Estatísticas
             stats_y = 210
             stat_lines = [
                 f"--- Estatísticas ---",
-                f"Meteoros gerados: {total_meteors_spawned}",
                 f"Power-ups coletados: {powerups_collected}",
                 f"Mísseis disparados: {missiles_fired}",
                 f"Mísseis acertados: {missiles_hit}",
@@ -533,31 +599,31 @@ while jogo_rodando:  # ← MUDANÇA: while jogo_rodando
                 txt = small_font.render(line, True, WHITE)
                 txt_rect = txt.get_rect(center=(WIDTH // 2, stats_y + i * 22))
                 screen.blit(txt, txt_rect)
-            
+
             # Botões
             button_y_start = 420
-            
+
             if selected_button == 0:
                 restart_text = menu_font_medium.render("> REINICIAR <", True, YELLOW)
             else:
                 restart_text = menu_font_medium.render("REINICIAR", True, WHITE)
             restart_rect = restart_text.get_rect(center=(WIDTH // 2, button_y_start))
             screen.blit(restart_text, restart_rect)
-            
+
             if selected_button == 1:
                 exit_text = menu_font_medium.render("> SAIR <", True, YELLOW)
             else:
                 exit_text = menu_font_medium.render("SAIR", True, WHITE)
             exit_rect = exit_text.get_rect(center=(WIDTH // 2, button_y_start + 60))
             screen.blit(exit_text, exit_rect)
-               
+
             pygame.display.flip()
-            
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     tela_final_ativa = False
                     jogo_rodando = False
-                
+
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_UP:
                         selected_button = (selected_button - 1) % 2
@@ -567,11 +633,11 @@ while jogo_rodando:  # ← MUDANÇA: while jogo_rodando
                         if selected_button == 0:  # Reiniciar
                             tela_final_ativa = False
                             game_state = "PLAYING"  # Começa o jogo direto!
-                            
+
                         elif selected_button == 1:  # Sair
                             tela_final_ativa = False
                             jogo_rodando = False
-            
+
             clock.tick(FPS)
 
 pygame.quit()
