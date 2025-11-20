@@ -114,6 +114,7 @@ missil_speed = 10
 score = 0
 lives = 3
 font = pygame.font.Font(None, 36)
+small_font = pygame.font.Font(None, 24)
 clock = pygame.time.Clock()
 running = True
 
@@ -488,19 +489,20 @@ else:
     play_seconds = max(0, (pygame.time.get_ticks() - start_time_ticks) // 1000)
 
 # Exibe estatísticas finais (várias linhas)
-stats_y = 340
+stats_y = 420
 stat_lines = [
+    f"--- Estatísticas de jogo ---",
     f"Meteoros evitados: {score}",
     f"Meteoros gerados (total): {total_meteors_spawned}",
     f"Power-ups coletados: {powerups_collected}",
     f"Mísseis disparados: {missiles_fired}",
     f"Mísseis que acertaram: {missiles_hit}",
     f"Vidas perdidas: {lives_lost}",
-    f"Tempo de jogo (s): {play_seconds}"
+    f"Tempo de jogo: {play_seconds} segundos"
 ]
 for i, line in enumerate(stat_lines):
-    txt = font.render(line, True, WHITE)
-    screen.blit(txt, (100, stats_y + i * 30))
+    txt = small_font.render(line, True, WHITE)
+    screen.blit(txt, (50, stats_y + i * 20))
 
 pygame.display.flip()
 
