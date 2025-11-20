@@ -13,7 +13,6 @@
 import pygame
 import random
 import os
-import math
 
 # Inicializa o PyGame
 pygame.init()
@@ -296,20 +295,53 @@ while running:
             meteor.y = random.randint(-100, -40)
             meteor.x = random.randint(0, WIDTH - meteor.width)
 
-            # chance de 10% de um meteoro ser powerup ou vida
-            if random.random() < 0.1:
-                if random.random() < 0.5:
-                    # chance de 50% de ser powerup
-                    px = random.randint(0, WIDTH - missil_powerup_img.get_width())
-                    py = random.randint(-300, -50)
-                    powerup_rect = missil_powerup_img.get_rect(topleft=(px, py))
+            # chance de 15% de um meteoro ser powerup ou vida
+            if difficulty_level <= 3:
+                if random.random() < 0.15:
+                    if random.random() < 0.8:
+                        # chance de 80% de ser powerup
+                        px = random.randint(0, WIDTH - missil_powerup_img.get_width())
+                        py = random.randint(-300, -50)
+                        powerup_rect = missil_powerup_img.get_rect(topleft=(px, py))
 
-                    missil_powerups.append(powerup_rect)
-                else:
-                    # chance de 50% de ser meteoro de vida
-                    lx = random.randint(0, WIDTH - 40)
-                    ly = random.randint(-300, -40)
-                    life_meteor_list.append(pygame.Rect(lx, ly, 40, 40))
+                        missil_powerups.append(powerup_rect)
+                    else:
+                        # chance de 20% de ser meteoro de vida
+                        lx = random.randint(0, WIDTH - 40)
+                        ly = random.randint(-300, -40)
+                        life_meteor_list.append(pygame.Rect(lx, ly, 40, 40))
+
+            # chance de 5% de um meteoro ser powerup ou vida
+            if difficulty_level > 3 and difficulty_level <= 6:
+                if random.random() < 0.05:
+                    if random.random() < 0.80:
+                        # chance de 80% de ser powerup
+                        px = random.randint(0, WIDTH - missil_powerup_img.get_width())
+                        py = random.randint(-300, -50)
+                        powerup_rect = missil_powerup_img.get_rect(topleft=(px, py))
+
+                        missil_powerups.append(powerup_rect)
+                    else:
+                        # chance de 20% de ser meteoro de vida
+                        lx = random.randint(0, WIDTH - 40)
+                        ly = random.randint(-300, -40)
+                        life_meteor_list.append(pygame.Rect(lx, ly, 40, 40))
+
+            # chance de 2.5% de um meteoro ser powerup ou vida
+            if difficulty_level > 7:
+                if random.random() < 0.025:
+                    if random.random() < 0.9:
+                        # chance de 90% de ser powerup
+                        px = random.randint(0, WIDTH - missil_powerup_img.get_width())
+                        py = random.randint(-300, -50)
+                        powerup_rect = missil_powerup_img.get_rect(topleft=(px, py))
+
+                        missil_powerups.append(powerup_rect)
+                    else:
+                        # chance de 10% de ser meteoro de vida
+                        lx = random.randint(0, WIDTH - 40)
+                        ly = random.randint(-300, -40)
+                        life_meteor_list.append(pygame.Rect(lx, ly, 40, 40))
 
             score += 1
             # ADDED: score reflete meteoros evitados (mantido)
@@ -323,11 +355,14 @@ while running:
                 level_up_message = f"Subiu de Nível: {difficulty_level}!"
                 level_up_timer = 120  # deixa mensagem por 120 frames (~2 segundos)
                 next_level_score = int(next_level_score * growth_factor)
-                if difficulty_level % 2 == 0:
+                if difficulty_level % 2 == 0: # Cria 2 meteoros a cada level up par (Nível 2, 4, 6, 8...)
                     new_meteor_x = random.randint(0, WIDTH - 40)
                     new_meteor_y = random.randint(-300, -40)
                     meteor_list.append(pygame.Rect(new_meteor_x, new_meteor_y, 40, 40))
-                    total_meteors_spawned += 1  # ADDED: conta meteoros criados por level-up
+                    new_meteor_x = random.randint(0, WIDTH - 40)
+                    new_meteor_y = random.randint(-300, -40)
+                    meteor_list.append(pygame.Rect(new_meteor_x, new_meteor_y, 40, 40))
+                    total_meteors_spawned += 2  # ADDED: conta meteoros criados por level-up
 
 
         # colisão com nave
@@ -382,11 +417,30 @@ while running:
     # ------------------------------------------------------
     if has_missil_power:
         missil_timer += 1
-        if missil_timer > 10:  # dispara a cada 20 frames
-            missil_rect = missil_shot_img.get_rect(midbottom=player_rect.midtop)
-            active_missils.append(missil_rect)
-            missil_timer = 0
-            missiles_fired += 1  # ADDED: conta mísseis disparados
+        if difficulty_level == 1:
+            if missil_timer > 25:  # dispara a cada 25 frames
+                missil_rect = missil_shot_img.get_rect(midbottom=player_rect.midtop)
+                active_missils.append(missil_rect)
+                missil_timer = 0
+                missiles_fired += 1  # ADDED: conta mísseis disparados
+        if difficulty_level >= 2 and difficulty_level <= 4:
+            if missil_timer > 15:  # dispara a cada 15 frames
+                missil_rect = missil_shot_img.get_rect(midbottom=player_rect.midtop)
+                active_missils.append(missil_rect)
+                missil_timer = 0
+                missiles_fired += 1  # ADDED: conta mísseis disparados
+        if difficulty_level >= 5 and difficulty_level <= 7:
+            if missil_timer > 5:  # dispara a cada 5 frames
+                missil_rect = missil_shot_img.get_rect(midbottom=player_rect.midtop)
+                active_missils.append(missil_rect)
+                missil_timer = 0
+                missiles_fired += 1  # ADDED: conta mísseis disparados
+        if difficulty_level > 7:
+            if missil_timer > 3:  # dispara a cada 3 frames
+                missil_rect = missil_shot_img.get_rect(midbottom=player_rect.midtop)
+                active_missils.append(missil_rect)
+                missil_timer = 0
+                missiles_fired += 1  # ADDED: conta mísseis disparados
 
         # atualiza contagem regressiva
         now = pygame.time.get_ticks()
@@ -496,7 +550,7 @@ stat_lines = [
     f"Meteoros gerados (total): {total_meteors_spawned}",
     f"Power-ups coletados: {powerups_collected}",
     f"Mísseis disparados: {missiles_fired}",
-    f"Mísseis que acertaram: {missiles_hit}",
+    f"Meteoros destruídos: {missiles_hit}",
     f"Vidas perdidas: {lives_lost}",
     f"Tempo de jogo: {play_seconds} segundos"
 ]
