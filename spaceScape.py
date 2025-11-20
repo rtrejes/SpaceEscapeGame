@@ -122,6 +122,7 @@ difficulty_level = 1
 next_level_score = 20
 growth_factor = 2
 level_up_message = ""
+current_level_message = ""
 level_up_timer = 0   # tempo que a mensagem fica na tela (em frames)
 # 🎮 Sistema de Menu Principal
 game_state = "MENU"  # pode ser: "MENU", "PLAYING", "PAUSED", "GAME_OVER"
