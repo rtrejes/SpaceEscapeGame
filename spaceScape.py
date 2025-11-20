@@ -292,9 +292,9 @@ while running:
             meteor.y = random.randint(-100, -40)
             meteor.x = random.randint(0, WIDTH - meteor.width)
 
-            # chance de 5% de um meteoro ser powerup ou vida
+            # chance de 9% de um meteoro ser powerup ou vida
             if difficulty_level < 3:
-                if random.random() < 0.5:
+                if random.random() < 0.09:
                     if random.random() < 0.9:
                         # chance de 90% de ser powerup
                         px = random.randint(0, WIDTH - missil_powerup_img.get_width())
@@ -308,9 +308,9 @@ while running:
                         ly = random.randint(-300, -40)
                         life_meteor_list.append(pygame.Rect(lx, ly, 40, 40))
 
-            # chance de 2.5% de um meteoro ser powerup ou vida
+            # chance de 5% de um meteoro ser powerup ou vida
             if difficulty_level >= 3 and difficulty_level < 7:
-                if random.random() < 0.025:
+                if random.random() < 0.05:
                     if random.random() < 0.90:
                         # chance de 90% de ser powerup
                         px = random.randint(0, WIDTH - missil_powerup_img.get_width())
@@ -324,9 +324,9 @@ while running:
                         ly = random.randint(-300, -40)
                         life_meteor_list.append(pygame.Rect(lx, ly, 40, 40))
 
-            # chance de 1% de um meteoro ser powerup ou vida
+            # chance de 2.5% de um meteoro ser powerup ou vida
             if difficulty_level >= 7:
-                if random.random() < 0.01:
+                if random.random() < 0.025:
                     if random.random() < 0.9:
                         # chance de 90% de ser powerup
                         px = random.randint(0, WIDTH - missil_powerup_img.get_width())
