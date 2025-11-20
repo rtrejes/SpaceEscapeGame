@@ -520,9 +520,21 @@ while jogo_rodando:  # ← MUDANÇA: while jogo_rodando
         # Mensagem de Level Up
         if level_up_timer > 0:
             msg = font.render(level_up_message, True, (255, 255, 0))
-            msg_rect = msg.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 100))
             current_lvl_msg = font.render(current_level_message, True, (255, 255, 0))
-            current_lvl_msg_rect = current_lvl_msg.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 70))
+            padding = 20
+            total_width = max(msg.get_width(), current_lvl_msg.get_width()) + padding * 2
+            total_height = msg.get_height() + current_lvl_msg.get_height() + padding * 3
+            fundo = pygame.Surface((total_width, total_height))
+            fundo.set_alpha(140)  # transparência (0=totalmente transparente, 255=opaco)
+            fundo.fill((0, 0, 0))  # cor do fundo (preto)
+            fundo_rect = fundo.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 180))
+            screen.blit(fundo, fundo_rect)
+            msg_rect = msg.get_rect(center=(WIDTH // 2, fundo_rect.centery - 20))
+            current_lvl_msg_rect = current_lvl_msg.get_rect(center=(WIDTH // 2, fundo_rect.centery + 20))
+
+            screen.blit(msg, msg_rect)
+            screen.blit(current_lvl_msg, current_lvl_msg_rect)
+
             screen.blit(msg, msg_rect)
             screen.blit(current_lvl_msg, current_lvl_msg_rect)
             level_up_timer -= 1
