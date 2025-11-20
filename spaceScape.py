@@ -13,6 +13,7 @@
 import pygame
 import random
 import os
+import math
 
 # Inicializa o PyGame
 pygame.init()
@@ -143,6 +144,17 @@ missil_time_left = 0          # tempo restante do power
 missil_end_time = 0           # momento em que acaba
 
 # ----------------------------------------------------------
+# 🟢 ADDED STATISTICS (não altera lógica do jogo, só registra dados)
+# ----------------------------------------------------------
+total_meteors_spawned = 0
+powerups_collected = 0
+missiles_fired = 0
+missiles_hit = 0
+lives_lost = 0
+start_time_ticks = None
+# ----------------------------------------------------------
+
+# ----------------------------------------------------------
 # 🎮 FUNÇÕES DO MENU
 # ----------------------------------------------------------
 # 🎮 Função para desenhar o menu principal
@@ -181,7 +193,8 @@ def reset_game():
     global score, lives, meteor_list, missil_powerups, active_missils, life_meteor_list
     global has_missil_power, missil_timer, missil_time_left, missil_end_time
     global player_rect, meteor_speed
-    
+    global total_meteors_spawned, powerups_collected, missiles_fired, missiles_hit, lives_lost, start_time_ticks
+
     # Reseta variáveis
     score = 0
     lives = 3
@@ -201,12 +214,21 @@ def reset_game():
         x = random.randint(0, WIDTH - 40)
         y = random.randint(-500, -40)
         meteor_list.append(pygame.Rect(x, y, 40, 40))
+        total_meteors_spawned += 1  # ADDED: conta meteoros gerados inicialmente
     
     # Reseta power-ups
     has_missil_power = False
     missil_timer = 0
     missil_time_left = 0
     missil_end_time = 0
+    
+    # Reseta estatísticas
+    powerups_collected = 0
+    missiles_fired = 0
+    missiles_hit = 0
+    lives_lost = 0
+    # marca tempo de início
+    start_time_ticks = pygame.time.get_ticks()
     
    # Reinicia música
     if os.path.exists(ASSETS["music"]):
@@ -236,7 +258,10 @@ while running:
                             x = random.randint(0, WIDTH - 40)
                             y = random.randint(-500, -40)
                             meteor_list.append(pygame.Rect(x, y, 40, 40))
+                            total_meteors_spawned += 1  # ADDED: conta meteoros gerados ao iniciar pelo menu
                         game_state = "PLAYING"
+                        # marca tempo de início quando começar a jogar
+                        start_time_ticks = pygame.time.get_ticks()
                     elif selected_option == 1:  # Sair
                         running = False
     
@@ -286,6 +311,7 @@ while running:
                     life_meteor_list.append(pygame.Rect(lx, ly, 40, 40))
 
             score += 1
+            # ADDED: score reflete meteoros evitados (mantido)
             if sound_point:
                 sound_point.play()
             
@@ -300,11 +326,13 @@ while running:
                     new_meteor_x = random.randint(0, WIDTH - 40)
                     new_meteor_y = random.randint(-300, -40)
                     meteor_list.append(pygame.Rect(new_meteor_x, new_meteor_y, 40, 40))
+                    total_meteors_spawned += 1  # ADDED: conta meteoros criados por level-up
 
 
         # colisão com nave
         if meteor.colliderect(player_rect):
             lives -= 1
+            lives_lost += 1  # ADDED: conta vidas perdidas
             meteor.y = random.randint(-100, -40)
             meteor.x = random.randint(0, WIDTH - meteor.width)
             if sound_hit:
@@ -325,6 +353,8 @@ while running:
             # ❗ Ativa timer de 10 segundos
             missil_time_left = 10
             missil_end_time = pygame.time.get_ticks() + 10000
+
+            powerups_collected += 1  # ADDED: conta powerups coletados
 
         elif power.y > HEIGHT:
             missil_powerups.remove(power)
@@ -355,6 +385,7 @@ while running:
             missil_rect = missil_shot_img.get_rect(midbottom=player_rect.midtop)
             active_missils.append(missil_rect)
             missil_timer = 0
+            missiles_fired += 1  # ADDED: conta mísseis disparados
 
         # atualiza contagem regressiva
         now = pygame.time.get_ticks()
@@ -384,6 +415,7 @@ while running:
                     meteor.y = random.randint(-100, -40)
                     meteor.x = random.randint(0, WIDTH - meteor.width)
                     active_missils.remove(m)
+                    missiles_hit += 1  # ADDED: conta acertos de mísseis
                     if sound_point:
                         sound_point.play()
                     break
@@ -438,16 +470,38 @@ while running:
     pygame.display.flip()
 
 # ----------------------------------------------------------
-# 🏁 TELA DE FIM DE JOGO
+# 🏁 TELA DE FIM DE JOGO (AGORA COM ESTATÍSTICAS FINAIS)
 # ----------------------------------------------------------
 pygame.mixer.music.stop()
 screen.fill((20, 20, 20))
 end_text = font.render("Fim de jogo! Pressione qualquer tecla para sair.", True, WHITE)
 final_score = font.render(f"Pontuação final: {score}", True, WHITE)
-screen.blit(end_text, (150, 260))
-screen.blit(final_score, (300, 300))
+screen.blit(end_text, (150, 220))
+screen.blit(final_score, (300, 260))
 level_reached = font.render(f"Nível alcançado: {difficulty_level}", True, WHITE)
-screen.blit(level_reached, (300, 340))
+screen.blit(level_reached, (300, 300))
+
+# Calcula tempo de jogo
+if start_time_ticks is None:
+    play_seconds = 0
+else:
+    play_seconds = max(0, (pygame.time.get_ticks() - start_time_ticks) // 1000)
+
+# Exibe estatísticas finais (várias linhas)
+stats_y = 340
+stat_lines = [
+    f"Meteoros evitados: {score}",
+    f"Meteoros gerados (total): {total_meteors_spawned}",
+    f"Power-ups coletados: {powerups_collected}",
+    f"Mísseis disparados: {missiles_fired}",
+    f"Mísseis que acertaram: {missiles_hit}",
+    f"Vidas perdidas: {lives_lost}",
+    f"Tempo de jogo (s): {play_seconds}"
+]
+for i, line in enumerate(stat_lines):
+    txt = font.render(line, True, WHITE)
+    screen.blit(txt, (100, stats_y + i * 30))
+
 pygame.display.flip()
 
 waiting = True
