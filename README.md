@@ -4,7 +4,7 @@ Jogo desenvolvido em Python com gráficos e sons, onde o objetivo é sobreviver 
 
 --------------
 ## Alunos / Colaboradores 
-- Ramiro Trejes — GitHub: rtrejes 
+- Carlos Ramiro Trejes — GitHub: rtrejes 
 - Gabriel Ribeiro — GitHub: gabrielribeirodc 
 - Artur Teixeira dos Santos — GitHub: artur5anto5 
 - João Pedro Fonseca — GitHub: ThawneFB
